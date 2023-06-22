@@ -1,0 +1,34 @@
+[build-system]
+requires = [
+    "setuptools>=58.0.1",
+    "wheel>=0.37.0",
+    "toml>=0.10.2"
+]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "rockin"
+version = "0.1.0"
+description = "A simple data entry webapp to enter rock sample data from wells digged with TU Delft"
+
+dependencies = [
+    'django',
+    'mysqlclient',
+    'django-widget-tweaks',
+    'pydantic',
+    'python-dotenv',
+]
+
+
+[project.optional-dependencies]
+dev = [
+    'coverage',
+    'pytest',
+    'pytest-cov',
+    'pylint',
+    'pytest-django',
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "rockin.settings"
