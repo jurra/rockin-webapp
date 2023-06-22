@@ -55,24 +55,10 @@ class CoreBase(RockinBase):
     class Meta:
         abstract = True
 
-# class Core(RockinBase):
-#     core_number = models.CharField(max_length=2, help_text="The predefined name of the core from C1 to C9")
-#     core_section_number = models.IntegerField(help_text="The counter for all 1 meter sections of the core")
-#     core_section_name = models.CharField(max_length=255, help_text="The name of the section based on the well name, the core number and the core section number. See that CC has a sequential relationship with the core number and core section number")
-
-#     class Meta:
-#         verbose_name_plural = "cores"
-
-# class CoreCatcher(CoreBase):
-#     core_number = models.CharField(max_length=2, help_text="The predefined name of the core from C1 to C9")
-#     core_section_number = models.IntegerField(help_text="The counter for all 1 meter sections of the core")
-#     core_section_name = models.CharField(max_length=255, help_text="The name of the section based on the well name, the core number and the core section number. See that CC has a sequential relationship with the core number and core section number")
-
-#     class Meta:
-#         verbose_name_plural = "core catchers"
-
 class Core(CoreBase):
     id = models.AutoField(primary_key=True, help_text="The id of the core")
+    well= models.ForeignKey(Well, on_delete=models.CASCADE, help_text="The id of the well", related_name='cores_well')
+
     CORE_TYPE_CHOICES = [
         ('Core', 'Core'),
         ('Core catcher', 'Core catcher')
@@ -133,8 +119,12 @@ class Core(CoreBase):
     gamma_ray = models.BooleanField(null=True, blank=True, help_text="Whether the core was gamma ray scanned or not")
     radiation = models.FloatField(null=True, blank=True, help_text="The radiation of the core in Bq units")
 
+    class Meta:
+        db_table = 'core'    
+
 class CoreChip(RockinBase):
-    id = models.AutoField(primary_key=True, help_text="The id of the core chip")
+    id = models.AutoField(primary_key=True, help_text="The id of the core")
+    well= models.ForeignKey(Well, on_delete=models.CASCADE, help_text="The id of the well", related_name='corechips_well')
     core_id = models.ForeignKey(
         'Core',
         on_delete=models.CASCADE,
@@ -157,4 +147,38 @@ class CoreChip(RockinBase):
     remarks = models.CharField(max_length=255, help_text="The remarks of the core chip")
     debris = models.BooleanField(null=True, blank=True, help_text="Whether the core chip is a debris or not")
     formation = models.CharField(max_length=255, null=True, blank=True, help_text="The formation of the core chip")
-   
+
+class Cuttings(RockinBase):
+    id = models.AutoField(primary_key=True, help_text="The id of the core")
+    well= models.ForeignKey(Well, on_delete=models.CASCADE, help_text="The id of the well", related_name='cuttings_well')
+    cuttings_number = models.IntegerField(help_text="The predefined name of the cuttings")
+    cuttings_name = models.CharField(max_length=255, help_text="The name of the cuttings")
+    cuttings_depth = models.FloatField(help_text="The depth of the cuttings in meters")
+    sample_state = models.CharField(max_length=100, choices=[('Wet washed', 'Wet washed'), ('Wet unwashed', 'Wet unwashed'), ('Dry washed', 'Dry washed')], help_text="The state of the sample")
+
+    # Optional fields
+    collection_method = models.CharField(max_length=8, null=True, blank=True, choices=[('Drilling', 'Drilling'), ('Coring', 'Coring'), ('Rathole', 'Rathole'), ('Flushing', 'Flushing')], help_text="The method used for collecting the cuttings")
+    drilling_method = models.CharField(max_length=100, null=True, blank=True, choices=[('Rotary', 'Rotary'), ('Motor', 'Motor'), ('Both', 'Both')], help_text="The method used for drilling")
+    sample_weight = models.FloatField(null=True, blank=True, help_text="The weight of the sample in kilograms")
+    dried_sample = models.BooleanField(null=True, blank=True, help_text="Whether the sample was dried or not")
+    dried_by = models.CharField(max_length=255, null=True, blank=True, help_text="The user who dried the sample")
+    dried_date = models.DateTimeField(null=True, blank=True, help_text="The date when the sample was dried")
+
+    class Meta:
+        verbose_name = "Cuttings"
+        verbose_name_plural = "Cuttings"
+
+class MicroCore(RockinBase):
+    id = models.AutoField(primary_key=True, help_text="The id of the core")
+    well= models.ForeignKey(Well, on_delete=models.CASCADE, help_text="The id of the well", related_name='microcores_well')
+    micro_core_number = models.IntegerField(help_text="The predefined name of the micro core")
+    micro_core_name = models.CharField(max_length=255, help_text="The name of the micro core that is generated based on well_name")
+
+    # Optional fields
+    drilling_method = models.CharField(max_length=100, null=True, blank=True, choices=[('Rotary', 'Rotary'), ('Motor', 'Motor'), ('Both', 'Both')], help_text="The method used for drilling")
+    drilling_bit = models.CharField(max_length=255, null=True, blank=True, help_text="The bit used for drilling")
+
+    class Meta:
+        verbose_name = "Micro Core"
+        verbose_name_plural = "Micro Cores"
+
