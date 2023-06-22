@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.shortcuts import render, redirect, get_object_or_404
-from crudapp.models.contact import Contact
+from .models import Contact
 from .forms import ContactForm
 from django.views.generic import ListView, DetailView
 

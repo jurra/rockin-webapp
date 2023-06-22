@@ -1,5 +1,5 @@
 from django import forms
-from crudapp.models.contact import Contact
+from crudapp.models import Contact, Well, Core
 
 class ContactForm(forms.ModelForm):
     class Meta:
