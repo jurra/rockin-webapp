@@ -51,8 +51,7 @@ class CoreBase(RockinBase):
     core_number = models.CharField(max_length=2, help_text="The predefined name of the core from C1 to C9")
     planned_core_number = models.CharField(max_length=2, help_text="The predefined name of the core from C1 to C9")
 
-    #FIXME: core_section_number = models.IntegerField(help_text="The counter for all 1 meter sections of the core")
-    core_section_number = models.AutoField(unique=True, help_text="The counter for all 1 meter sections of the core")
+    core_section_number = models.IntegerField(help_text="The counter for all 1 meter sections of the core")
     core_section_name = models.CharField(max_length=255, help_text="The name of the section based on the well name, the core number and the core section number. See that CC has a sequential relationship with the core number and core section number")
 
     class Meta:
