@@ -15,7 +15,7 @@ class Contact(models.Model):
 
 class Well(models.Model):
     id = models.AutoField(primary_key=True)
-    well_name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
 
     class Meta:
         verbose_name = "Well"
@@ -59,7 +59,7 @@ class CoreBase(RockinBase):
 
 class Core(CoreBase):
     id = models.AutoField(primary_key=True, help_text="The id of the core")
-    well= models.ForeignKey(Well, on_delete=models.CASCADE, help_text="The id of the well", related_name='cores_well')
+    well= models.ForeignKey(Well, on_delete=models.CASCADE, help_text="The id of the well", related_name='cores')
 
     CORE_TYPE_CHOICES = [
         ('Core', 'Core'),

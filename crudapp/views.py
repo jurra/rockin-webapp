@@ -56,6 +56,85 @@ def delete(request, pk, template_name='confirm_delete.html'):
         return redirect('index')
     return render(request, template_name, {'object': contact})
 
+def _post(object, request, **kwargs):
+    print("DB, object type being passed to _post:", object.__dict__)
+    # Get the name of the model that we're working with
+    model_name = kwargs.get('model_name')
+
+    # Get the data from the POST request
+    post_data = request.POST.dict()
+
+    # Add an ID to the data (if one doesn't already exist)
+    if 'id' not in post_data:
+        post_data['id'] = 1
+
+    try:
+        # Create a new instance of the specified model using the provided data
+        model_class = getattr(datamodel, model_name)
+        pydantic_model_instance = model_class(**post_data)
+        # print(model_instance)
+    except ValidationError as e:
+        # Handle validation errors
+        form = object.get_form()
+        for error in e.errors():
+            field = error['loc'][0]
+            message = error['msg']
+            form.add_error(field, message)
+        return object.form_invalid(form)
+
+    # Check if an instance with the same name already exists in the database
+    if eval(model_name).objects.filter(name=pydantic_model_instance.name).exists():
+        form = object.get_form()
+        form.add_error('name', f"This {model_name} already exists.")
+        return object.form_invalid(form)
+
+    # Save the new instance to the database
+    form = object.get_form()
+    form.save()
+    return super().form_valid(form)
+    # return redirect(self.success_url)
+
+
+def _validate(view, request, **kwargs):
+    ''' How it works:
+    - Get the name of the model that we're working with, Such model has a class
+    in pydantic, for example Well and also on Django ORM with the same name
+    - Get the data from the POST request
+    - Add an ID to the data (if one doesn't already exist) this is required for pydantic to work
+    because the id is part of the data model in pydantic.
+    - Validate the data by creating the pydantic model instance, 
+    pydantic automatically validates the data
+    Args:
+        view ([type]): [description], this is the view that is calling the function
+        request ([type]): [description], this is the request object
+
+    '''
+    model_name = kwargs.get('model_name')
+    post_data = request.POST.dict()
+    # Our current pydantic model needs an id to be created
+    # This is why we add it here, but when we pass the data to the form
+    # It will be ignored later.
+    if 'id' not in post_data:
+        post_data['id'] = 1
+    try:
+        # Get the correct model class for example Well, or Core
+        model = getattr(datamodel, model_name)
+
+        # Create a new instance of the specified model using the provided data
+        # This will raise a ValidationError if the data is invalid
+        validated_data = model(**post_data)
+        # print(model_instance)
+    except ValidationError as e:
+        # Handle validation errors
+        form = view.get_form()
+        for error in e.errors():
+            print("DB, error:", error)
+            field = error['loc'][0]
+            message = error['msg']
+            form.add_error(field, message)
+        return view.form_invalid(form)
+    return validated_data
+
 
 class WellFormView(FormView):
     template_name = 'core.html'
@@ -63,31 +142,18 @@ class WellFormView(FormView):
     success_url = reverse_lazy('wells')
 
     def post(self, request, *args, **kwargs):
-        post_data = request.POST.dict()
-        # Our current pydantic model needs an id to be created
-        # This is why we add it here, but when we pass the data to the form
-        # It will be removed.
-        post_data['id'] = 1
-        try:
-            well_data = datamodel.Well(**post_data)
-        except ValidationError as e:
-            form = self.get_form()
-            # Return all errors
-            for error in e.errors():
-                field = error['loc'][0]
-                message = error['msg']
-                form.add_error(field, message)
-            return self.form_invalid(form)
+        well = _validate(self, request, model_name='Well')
 
-        if Well.objects.filter(well_name=well_data.well_name).exists():
+        if Well.objects.filter(name=well.name).exists():
             form = self.get_form()
-            form.add_error('well_name', 'This well already exists.')
+            form.add_error('name', 'This well already exists.')
             return self.form_invalid(form)
 
         # If the selected Well does not exist in the database, save the form
         form = self.get_form()
         form.save()
         return super().form_valid(form)
+
 
 # CORE VIEW AND FORMSET
 # The core controller should be able to handle the following requests from

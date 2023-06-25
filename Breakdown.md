@@ -1,8 +1,13 @@
+DEV NOTES
+
 TASKS:
 - List all the acceptance criteria for the project including the postgresql database backend
 - Change the project so that it works with postgresql
 - Install `django-crispy-forms` to apply bootstrap to the forms templates
 - Make unit tests that test the model and relationships
+- [ ] Setup properly gitpython which is not working at the moment. For now we do the submodules manually
+
+
 
 STORY: Introduce Well data
     TASKS:
@@ -12,6 +17,7 @@ STORY: Introduce Well data
         - [x] Import view in urls.py and write the url
         - [x] Create template
         - [x] Redirect page after successful entry
+        - [x] Validate the form in the view
         - [x] Test coverage for model
         - [x] Test coverage for view
         AC: [x] User is not allowed to enter a well that already exists
@@ -19,11 +25,13 @@ STORY: Introduce Well data
 
 STORY: Introduce core data
     TASKS:
-        - [] Create the model in models.py
+        - [x] Create the model in models.py
         - [] Create the form with fields all
         - [] Import form in view and write the view
         - [] Import view in urls.py and write the url
         - [] Create template
+        - [x] Test model and its relationships
+        AC: Date entries should be valid and even automatically generated
         AC: User is not allowed to enter a core that already exists
         AC: Core section number should be a secuence from 0 to N for each well
         AC: If a core_catcher has preceeded a following core then the core_catcher count should be considered also in the core section number. Therefore, if the last core_catcher was 3 then the next core should be 4, 5, 6, etc.
