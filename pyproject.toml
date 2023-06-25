@@ -2,7 +2,9 @@
 requires = [
     "setuptools>=58.0.1",
     "wheel>=0.37.0",
-    "toml>=0.10.2"
+    "toml>=0.10.2",
+    "gitpython>=2.1.0",
+    'django',
 ]
 build-backend = "setuptools.build_meta"
 
@@ -13,7 +15,6 @@ version = "0.1.0"
 description = "A simple data entry webapp to enter rock sample data from wells digged with TU Delft"
 
 dependencies = [
-    'django',
     'mysqlclient',
     'django-widget-tweaks',
     'pydantic',
