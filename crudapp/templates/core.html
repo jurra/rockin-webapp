@@ -5,6 +5,32 @@
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
+    <div>
+      <label for="core-section-name">Core Section Name</label>
+      <input type="text" id="core-section-name" name="core_section_name" maxlength="255" required>
+    </div>
     <button type="submit">Create</button>
   </form>
+  
+  <script>
+    const wellNameSectionField = document.getElementById('id_well');
+    const coreNumberField = document.getElementById('id_core_number');
+    const coreSectionField = document.getElementById('id_core_section_number');
+    const coreSectionNameField = document.getElementById('core-section-name');
+
+    function updateCoreSectionName() {
+      const wellName = wellNameSectionField.value;
+      const coreNumber = coreNumberField.value;
+      const coreSectionNumber = coreSectionField.value;
+      coreSectionNameField.value = `${wellName}-${coreNumber}-${coreSectionNumber}`;
+    }
+
+    coreNumberField.addEventListener('input', updateCoreSectionName);
+    coreNumberField.addEventListener('input', updateCoreSectionName);
+    coreSectionField.addEventListener('change', updateCoreSectionName);
+
+    // Set initial value of core section name
+    updateCoreSectionName();
+    setInterval(updateCoreSectionName, 500);
+  </script>
 {% endblock %}

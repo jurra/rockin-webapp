@@ -21,7 +21,7 @@ def core_data(well):
         "core_number": "C1",
         "core_section_number": 1, # Should be a counter
         "top_depth": 100.00,
-        "core_section_name": "Test Well C1 - Section 1"
+        # "core_section_name": "Test Well C1 - Section 1"
     }
 
 @pytest.fixture

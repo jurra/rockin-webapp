@@ -20,21 +20,50 @@ STORY: Introduce Well data
         - [x] Validate the form in the view
         - [x] Test coverage for model
         - [x] Test coverage for view
+            - [ ] Test invalid form, name that is integer instead of string
         AC: [x] User is not allowed to enter a well that already exists
         AC: User should be able to see a list of the last 10 wells entered
 
 STORY: Introduce core data
     TASKS:
         - [x] Create the model in models.py
-        - [] Create the form with fields all
+        - [x] Create the form with fields all
         - [] Import form in view and write the view
         - [] Import view in urls.py and write the url
-        - [] Create template
+        - [x] Create template
         - [x] Test model and its relationships
-        AC: Date entries should be valid and even automatically generated
+        - [x] Question: Are cuttings and microchips also counted as core_catchers are counted, which are essentially cores?
+
+        **Must have:**
+        AC: [] All numeric fields should be higher than 0
+        AC: [] Avoid duplicate of core section number
+        AC: [] Avoid forcing user to select well name every time, create a way to globally select a well name and have a way to select a different well,
+            The user should even be presented with a warning if the well name will be changed
+        AC: [x] User should be able to select a well from a list of wells
+        AC: [x] C1 to C9 dropdown for core number
+        AC: [x] C1 t C9 dropdown for planned core number
+        AC: [x] Create section name automatically from well name, core number and core section number
+        AC: [x] Present preview of core section name based on input data
         AC: User is not allowed to enter a core that already exists
-        AC: Core section number should be a secuence from 0 to N for each well
+            the system should check if the core number and the well name already exist
+        AC: Date entries should be valid and even automatically generated
         AC: If a core_catcher has preceeded a following core then the core_catcher count should be considered also in the core section number. Therefore, if the last core_catcher was 3 then the next core should be 4, 5, 6, etc.
+        AC: Core section number should be a sequence from 0 to N for each well
+
+
+       **Would very useful to have:**
+        AC: Link to url where images of the core live
+        AC: The fields used to generate the core_section_name should be all close to each other in the form
+        AC: The order of fields in the form should be presented as they are in the access database
+        AC: Separate required fields from optional fields
+        AC: Help of fields should be descriptive and provide even examples
+        AC: A dialog box with a view of how the core data will look like should be presented before the user submits the form
+
+
+STORY: Edit core data so that user can add optional fields later or correct certain data
+    AC: User should be able to edit core data
+    AC: User should be able to correct certain data???
+
 
 STORY: Automatically post a core sample to ELAB journals to properly create stickers
     AC: If an entry is valid then a post request should be sent to ELAB journals to create a sticker via ELAB journals API

@@ -2,8 +2,8 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Contact, Well
-from .forms import ContactForm, WellForm
+from .models import Contact, Well, Core
+from .forms import ContactForm, WellForm, CoreForm
 from django.views.generic import ListView, DetailView, FormView
 from django.urls import reverse_lazy
 
@@ -144,6 +144,7 @@ class WellFormView(FormView):
     def post(self, request, *args, **kwargs):
         well = _validate(self, request, model_name='Well')
 
+        # Reject entry if the selected Well already exists in the database
         if Well.objects.filter(name=well.name).exists():
             form = self.get_form()
             form.add_error('name', 'This well already exists.')
@@ -171,61 +172,21 @@ class WellFormView(FormView):
 #   -  core_section_name: should be auto-filled based on the well name, the core number and the core section number for example DELGT01-C1-53
 #   -  If the use has selected catcher and it is preceeded by a core then the core_section_name should be auto-filled based on the preceding core number and the core section number for example DELGT01-C1-53-CC54
 #
+class CoreFormView(FormView):
+    template_name = 'core.html'
+    form_class = CoreForm
+    success_url = reverse_lazy('cores')
 
-'''
-This generalized create_instance function takes in two arguments: the request object that contains the data for the new model instance, and the model_class argument that specifies which Django model class to use for creating the instance.
+    # Create section name based on the well name, the core number and the core section number
+    def post(self, request, *args, **kwargs):
+        
+        core = _validate(self, request, model_name='Core')
 
-The function first checks the request method and returns an error response if it's not a POST request. Then it creates a Pydantic model instance using the post data and checks if the data is valid by calling the full_clean() method on the instance. If there are any validation errors, the function returns an error response with the corresponding validation error messages.
-
-If the data is valid, the function checks if an instance with the same name already exists in the database. If so, it returns an error response indicating that an instance with the same name already exists.
-
-Finally, if everything is valid up to this point, the function creates a new instance of the specified model_class, saves it to the database, and returns a success response with the newly created instance as a JSON object.
-'''
-
-def create_instance(request, model_class):
-    """
-    Create a new instance of the given Django model class using data from the request.
-    If the model instance is valid, save it to the database and return a success response.
-    If the model instance is invalid, return an error response with validation errors.
-
-    Args:
-        request (HttpRequest): The HTTP request containing the data for the new model instance.
-        model_class (Model): The Django model class for the type of instance to create.
-
-    Returns:
-        JsonResponse: A JSON response indicating success or error status.
-    """
-    if request.method != "POST":
-        return JsonResponse({"error": "Invalid request method"}, status=405)
-
-    post_data = request.POST.dict()
-
-    # Our current pydantic model needs an id to be created
-    # This is why we add it here, but when we pass the data to the form
-    # It will be removed.
-    post_data['id'] = 1
-
-    try:
-        instance_data = model_class(**post_data)
-        instance_data.full_clean()
-    except ValidationError as e:
-        errors = {}
-        for field, error_list in e.message_dict.items():
-            errors[field] = [str(e) for e in error_list]
-        return JsonResponse({"errors": errors}, status=400)
-
-    # Check if an instance with the same name already exists
-    existing_instances = model_class.objects.filter(name=post_data["name"])
-    if existing_instances.exists():
-        return JsonResponse(
-            {"error": f"{model_class.__name__} with this name already exists"},
-            status=409,
-        )
-
-    instance = model_class(**post_data)
-    instance.save()
-
-    return JsonResponse(
-        model_to_dict(instance), status=201
-    )
-
+        if Core.objects.filter(core_section_name=core.core_section_name).exists():
+            form = self.get_form()
+            form.add_error('name', 'This core already exists.')
+            return self.form_invalid(form)
+        
+        form = self.get_form()
+        form.save()
+        return super().form_valid(form)
