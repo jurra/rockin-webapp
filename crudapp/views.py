@@ -82,16 +82,10 @@ def _validate(view, post_data, **kwargs):
         # Create a new instance of the specified model using the provided data
         # This will raise a ValidationError if the data is invalid
         validated_data = model(**post_data)
-        print("DB, Validated data: " + type(validated_data))
+        # print("DB, Validated data: " + type(validated_data))
         # print(model_instance)
     except ValidationError as e:
-        # Handle validation errors
-        form = view.get_form()
-        for error in e.errors():
-            field = error['loc'][0]
-            message = error['msg']
-            form.add_error(field, message)
-        return view.form_invalid(form)
+        return e
     return validated_data
 
 
@@ -109,7 +103,17 @@ class WellFormView(FormView):
             post_data['id'] = 1
         
         checked_well = _validate(self, post_data=post_data, model_name='Well')
-        
+        # print("DB, Checked well: " + checked_well)
+
+        if checked_well is not None:
+            if type(checked_well) is ValidationError:
+                form = self.get_form()
+                for error in checked_well.errors():
+                    field = error['loc'][0]
+                    message = error['msg']
+                    form.add_error(field, message)
+                return self.form_invalid(form)
+
         # Reject entry if the selected Well already exists in the database
         if Well.objects.filter(name=checked_well.name).exists():
             form = self.get_form()
@@ -118,9 +122,12 @@ class WellFormView(FormView):
 
         # If the selected Well does not exist in the database, save the form
         form = self.get_form()
-        form.save()
-        return super().form_valid(form)
-
+        if form.is_valid():
+            form.save()
+            return super().form_valid(form)
+        else:
+            print(form.errors)
+            return self.form_invalid(form)
 
 # CORE VIEW AND FORMSET
 # The core controller should be able to handle the following requests from
@@ -147,21 +154,34 @@ class CoreFormView(FormView):
     def post(self, request, *args, **kwargs):
         post_data = request.POST.dict()
 
-        # if 'well_name' in post_data:
-        #     # Remove the well name from the post data
-        #     post_data.pop('well_name')
         if 'id' not in post_data:
             post_data['id'] = 1
-
-        checked_core = _validate(self, post_data=post_data, model_name='Core')
         
-        core_section_name = f"{checked_core.well}-{checked_core.core_number}-{checked_core.core_section_number}"
+        # Add the core section name to the post data so that it can be validated
+        core_section_name = f"{post_data.get('well')}-{post_data.get('core_number')}-{post_data.get('core_section_number')}"
+        post_data['core_section_name'] = core_section_name
 
         if Core.objects.filter(core_section_name=core_section_name).exists():
             form = self.get_form()
-            # form.add_error('name', 'This core already exists.')
+            form.add_error('name', 'This core already exists.')
+            return self.form_invalid(form)
+        print(post_data)
+        checked_core = _validate(self, post_data=post_data, model_name='Core')
+        
+        if checked_core is not None:
+            if checked_core is ValidationError:
+                form = self.get_form()
+                for error in checked_core.errors():
+                    field = error['loc'][0]
+                    message = error['msg']
+                    form.add_error(field, message)
+                return self.form_invalid(form)
+        print("DB, Checked core is valid")
+        form = self.get_form()
+        if form.is_valid():
+            form.save()
+            return super().form_valid(form)
+        else:
+            print(form.errors)
             return self.form_invalid(form)
         
-        form = self.get_form()
-        form.save()
-        return super().form_valid(form)
