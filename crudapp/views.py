@@ -56,46 +56,7 @@ def delete(request, pk, template_name='confirm_delete.html'):
         return redirect('index')
     return render(request, template_name, {'object': contact})
 
-def _post(object, request, **kwargs):
-    print("DB, object type being passed to _post:", object.__dict__)
-    # Get the name of the model that we're working with
-    model_name = kwargs.get('model_name')
-
-    # Get the data from the POST request
-    post_data = request.POST.dict()
-
-    # Add an ID to the data (if one doesn't already exist)
-    if 'id' not in post_data:
-        post_data['id'] = 1
-
-    try:
-        # Create a new instance of the specified model using the provided data
-        model_class = getattr(datamodel, model_name)
-        pydantic_model_instance = model_class(**post_data)
-        # print(model_instance)
-    except ValidationError as e:
-        # Handle validation errors
-        form = object.get_form()
-        for error in e.errors():
-            field = error['loc'][0]
-            message = error['msg']
-            form.add_error(field, message)
-        return object.form_invalid(form)
-
-    # Check if an instance with the same name already exists in the database
-    if eval(model_name).objects.filter(name=pydantic_model_instance.name).exists():
-        form = object.get_form()
-        form.add_error('name', f"This {model_name} already exists.")
-        return object.form_invalid(form)
-
-    # Save the new instance to the database
-    form = object.get_form()
-    form.save()
-    return super().form_valid(form)
-    # return redirect(self.success_url)
-
-
-def _validate(view, request, **kwargs):
+def _validate(view, post_data, **kwargs):
     ''' How it works:
     - Get the name of the model that we're working with, Such model has a class
     in pydantic, for example Well and also on Django ORM with the same name
@@ -108,14 +69,12 @@ def _validate(view, request, **kwargs):
         view ([type]): [description], this is the view that is calling the function
         request ([type]): [description], this is the request object
 
+    Returns:
+
     '''
     model_name = kwargs.get('model_name')
-    post_data = request.POST.dict()
-    # Our current pydantic model needs an id to be created
-    # This is why we add it here, but when we pass the data to the form
-    # It will be ignored later.
-    if 'id' not in post_data:
-        post_data['id'] = 1
+    # post_data = request.POST.dict()
+
     try:
         # Get the correct model class for example Well, or Core
         model = getattr(datamodel, model_name)
@@ -123,12 +82,12 @@ def _validate(view, request, **kwargs):
         # Create a new instance of the specified model using the provided data
         # This will raise a ValidationError if the data is invalid
         validated_data = model(**post_data)
+        print("DB, Validated data: " + type(validated_data))
         # print(model_instance)
     except ValidationError as e:
         # Handle validation errors
         form = view.get_form()
         for error in e.errors():
-            print("DB, error:", error)
             field = error['loc'][0]
             message = error['msg']
             form.add_error(field, message)
@@ -137,17 +96,24 @@ def _validate(view, request, **kwargs):
 
 
 class WellFormView(FormView):
-    template_name = 'core.html'
+    template_name = 'well.html'
     form_class = WellForm
     success_url = reverse_lazy('wells')
 
     def post(self, request, *args, **kwargs):
-        well = _validate(self, request, model_name='Well')
-
+        post_data = request.POST.dict()
+        # Our current pydantic model needs an id to be created
+        # This is why we add it here, but when we pass the data to the form
+        # It will be ignored later.
+        if 'id' not in post_data:
+            post_data['id'] = 1
+        
+        checked_well = _validate(self, post_data=post_data, model_name='Well')
+        
         # Reject entry if the selected Well already exists in the database
-        if Well.objects.filter(name=well.name).exists():
+        if Well.objects.filter(name=checked_well.name).exists():
             form = self.get_form()
-            form.add_error('name', 'This well already exists.')
+            # form.add_error('name', 'This well already exists.')
             return self.form_invalid(form)
 
         # If the selected Well does not exist in the database, save the form
@@ -179,12 +145,21 @@ class CoreFormView(FormView):
 
     # Create section name based on the well name, the core number and the core section number
     def post(self, request, *args, **kwargs):
-        
-        core = _validate(self, request, model_name='Core')
+        post_data = request.POST.dict()
 
-        if Core.objects.filter(core_section_name=core.core_section_name).exists():
+        # if 'well_name' in post_data:
+        #     # Remove the well name from the post data
+        #     post_data.pop('well_name')
+        if 'id' not in post_data:
+            post_data['id'] = 1
+
+        checked_core = _validate(self, post_data=post_data, model_name='Core')
+        
+        core_section_name = f"{checked_core.well}-{checked_core.core_number}-{checked_core.core_section_number}"
+
+        if Core.objects.filter(core_section_name=core_section_name).exists():
             form = self.get_form()
-            form.add_error('name', 'This core already exists.')
+            # form.add_error('name', 'This core already exists.')
             return self.form_invalid(form)
         
         form = self.get_form()
