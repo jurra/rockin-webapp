@@ -5,10 +5,6 @@
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <div>
-      <label for="core-section-name">Core Section Name</label>
-      <input type="text" id="core-section-name" name="core_section_name" maxlength="255" required>
-    </div>
     <button type="submit">Create</button>
   </form>
   
@@ -16,7 +12,7 @@
     const wellNameSectionField = document.getElementById('id_well');
     const coreNumberField = document.getElementById('id_core_number');
     const coreSectionField = document.getElementById('id_core_section_number');
-    const coreSectionNameField = document.getElementById('core-section-name');
+    const coreSectionNameField = document.getElementById('id_core_section_name');
 
     function updateCoreSectionName() {
       const wellName = wellNameSectionField.value;

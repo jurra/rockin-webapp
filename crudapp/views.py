@@ -163,7 +163,7 @@ class CoreFormView(FormView):
 
         if Core.objects.filter(core_section_name=core_section_name).exists():
             form = self.get_form()
-            form.add_error('name', 'This core already exists.')
+            form.add_error('core_section_name', 'This core already exists.')
             return self.form_invalid(form)
         print(post_data)
         checked_core = _validate(self, post_data=post_data, model_name='Core')

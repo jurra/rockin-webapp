@@ -18,12 +18,23 @@ class CoreForm(ModelForm):
         model = Core
         # Lest display for testing only the fields that are required
         labels = {
-            'well': 'WellName',
-            'core_number': 'CoreNumber',
-            'core_section_number': 'CoreSectionNumber',
+            'well': 'Well Name',
+            'core_number': 'Core Number',
+            'core_section_number': 'Core Section Number',
         }
         
         fields = "__all__"
+        exclude = [
+                   'formation',
+                   'lithology',
+                   'core_weight',
+                   'core_length',
+                   'gamma_ray',
+                   'radiation',
+                   'ct_scanned',
+                   'bottom_depth'
+                   ]
+        
         widgets = {
             'core_section_name': TextInput(attrs={'readonly': 'readonly'}),
         }
