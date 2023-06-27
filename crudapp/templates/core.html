@@ -9,6 +9,7 @@
   </form>
   
   <script>
+    const coreTypeField = document.getElementById('id_core_type');
     const wellNameSectionField = document.getElementById('id_well');
     const coreNumberField = document.getElementById('id_core_number');
     const coreSectionField = document.getElementById('id_core_section_number');
@@ -19,6 +20,12 @@
       const coreNumber = coreNumberField.value;
       const coreSectionNumber = coreSectionField.value;
       coreSectionNameField.value = `${wellName}-${coreNumber}-${coreSectionNumber}`;
+
+      // A core catcher depends on a core section name
+      if (coreTypeField.value === 'Core catcher') {
+        countForCC = parseInt(coreSectionField.value) + 1;
+        coreSectionNameField.value = `${wellName}-${coreNumber}-${coreSectionNumber}-CC${countForCC}`;
+      }
     }
 
     coreNumberField.addEventListener('input', updateCoreSectionName);
