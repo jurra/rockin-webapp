@@ -130,5 +130,20 @@ def test_core_form_view(core_data):
 
 
 # TODO: Test the sequence behaviour of core_catcher, cores and core_section_number
+@pytest.mark.django_db
+def test_core_catcher_sequence(core_data):
+    pass
+
 
 # TODO: Test counter behaviour of core_section_number
+@pytest.mark.django_db
+def test_core_section_number_counter(core_data):
+    '''Create in the following sequence:
+    1. Core
+    2. Core catcher
+    3. Core
+    '''
+    # AC: Check that the core catcher last number is one more than the last core number
+    
+    # AC: Check that the core last number is one more than the last core catcher number
+    pass
