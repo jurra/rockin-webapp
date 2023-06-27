@@ -25,7 +25,7 @@ def test_well_form_view():
     response = view(request)
 
     # Test that the template used by the view is correct
-    assert response.template_name == ['core.html']
+    assert response.template_name == ['well.html']
 
     # Test that the form used by the view is correct
     assert isinstance(response.context_data['form'], WellForm)
