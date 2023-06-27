@@ -1,18 +1,32 @@
 DEV NOTES
 
+URGENT:
+
+
+
 TASKS:
-- List all the acceptance criteria for the project including the postgresql database backend
+- Fix the available core section number based on the last section number, for example:
+    starting from 0 then 0 should 1 should be the minimum available number
+    If a first corecatcher is entered following the first core then the available number should be 3
+- Registered by field should be automatically filled with the user that is logged in
 - Change the project so that it works with postgresql
 - Install `django-crispy-forms` to apply bootstrap to the forms templates
-- Make unit tests that test the model and relationships
-- [ ] Setup properly gitpython which is not working at the moment. For now we do the submodules manually
+- List all the acceptance criteria for the project including the postgresql database backend
+
+STORY: User management
+    TASKS:
+        - [ ] Setup django authentication
+
+
+STORY: Admin and users with rights should be able to read data directly from the database
+    AC: Access should be provided so that people can explore data with python
+    AC: Access should be provided so that people can explore data with an SQL client like pgadming for example.
 
 STORY: Navigation of Rockin webapp
     AC: List of wells should be presented in the home page
     AC: List of cores should be presented in the home page
     AC: Global well selected to introduce cores should be presented
     AC: Search by date, depth, etc... ???
-
 
 STORY: Relate data entry to user
     AC: User should be registered by sys admin
@@ -54,6 +68,7 @@ STORY: Introduce core data
         - [ ] Make a list of GUI related acceptance criteria
 
         **Must have:**
+        AC: [] 
         AC: [] If a core is preceeded by a core_catcher then keep the count of the core catcher for the next core... 
             For example, if the last core_catcher was 3 then the next core should be 4, 5, 6, etc. And the preceding core should be 2.
         AC: [x] All numeric fields should be higher than 0
@@ -80,7 +95,36 @@ STORY: Introduce core data
         AC: Help of fields should be descriptive and provide even examples
         AC: A dialog box with a view of how the core data will look like should be presented before the user submits the form
 
-STORY: Introduce core catcher data
+STORY: Introduce core catcher data based on available cores
+    TASKS:
+        - [ ] Create the model in models.py
+        - [ ] Create the form with fields all
+        - [ ] Import form in view and write the view
+        - [ ] Simple gui solution for the core catcher should allow to:
+            - [ ] Select core that we want to create a core catcher for (This can be a dropdown list of cores the user can filter by writing the core section name)
+            - [ ] Prefill data from core section
+            - [ ] In core number the number available should be dynamic based on the last number of the core or core_catcher
+            - [ ] If a core_catcher preceeds a core_catcher, then the last count comes from the last core_catcher
+
+        AC: [ ] User should be able to select a core from a list of cores
+        AC: [ ] Cores and core catchers should be related in terms of sequence
+        AC: [ ] Users need to be able to enter data of cores and core catchers in parallel, therefore we cannot define automatically the core catcher number..
+
+- [ ] Solution para core catcher:
+    - AC: Select core that we want to create a core catcher for
+    - Prefill data from core section
+    - In core number the number available should be dynamic based on the last number of the core or core_catcher
+    - If a core_catcher preceeds a core_catcher, then the last count comes from the last core_catcher
+
+
+- [ ] Check that the core catcher is correctly modeled
+    It is not clear to me if the core catcher is really a type of core or not
+    Or if we chose to make it a core type for convenenience since they were very similar???
+    If they are two separate entities that are related then the core catcher should be a separate model
+    At the same time the relationship of count between core and core catcher should be modeled
+    Can a core have more than one core catcher? If no then this is very simple to solve...
+
+
     AC: Previous core section name should be presented when core_type is selected
     AC: Should be created from the same create core form
     AC: Should only be allowed to enter if there is a preceeding core that matches the core_section_number. 
@@ -96,7 +140,7 @@ STORY: Automatically post a core sample to ELAB journals to properly create stic
     AC: The sticker could be also presented in the page
     AC: If the post request is not succesfull then an error message should be shown in the page
 
-
+STORY: 
 
 STORY: Introduce subsamples data
     cuttings
