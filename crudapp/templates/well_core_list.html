@@ -11,6 +11,6 @@
   {% endfor %}
 </ul>
 <!-- Add a button to create a core -->
-<a href="{% url 'cores' pk=well.pk%}">Add a core</a>
+<a href="{% url 'cores' pk=well.pk %}?well_name={{ well.name }}">Add a core</a>
 
 {% endblock %}

@@ -158,7 +158,8 @@ class WellCoreListView(ListView):
     model = Well
     template_name = 'well_core_list.html'
     context_object_name = 'well_core_list'
-
+    # Add a reverse lazy url to create a core
+    success_url = reverse_lazy('cores')
 
     def get(self, request, *args, **kwargs):
         # A list of all the cores related to a well
@@ -172,10 +173,18 @@ class WellCoreListView(ListView):
             return render(request, self.template_name, {'well': None, 'cores': None})
 
 class CoreFormView(FormView):
+    # model = Well
     template_name = 'core.html'
     form_class = CoreForm
     success_url = reverse_lazy('cores')
 
+    def get_initial(self):
+        initial = super().get_initial()
+        # Retrieve the well name from your data source or database
+        well_name = self.request.GET.get('well_name')
+        initial['well'] = well_name
+        return initial
+    
     # Create section name based on the well name, the core number and the core section number
     def post(self, request, *args, **kwargs):
         post_data = request.POST.dict()
