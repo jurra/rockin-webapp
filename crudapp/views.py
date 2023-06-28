@@ -22,6 +22,8 @@ class IndexView(ListView):
         return Contact.objects.all()
 
 # CONTACT VIEW
+
+
 class ContactDetailView(DetailView):
     model = Contact
     template_name = 'contact-detail.html'
@@ -53,6 +55,7 @@ def delete(request, pk, template_name='confirm_delete.html'):
         contact.delete()
         return redirect('index')
     return render(request, template_name, {'object': contact})
+
 
 def _validate(view, post_data, **kwargs):
     ''' How it works:
@@ -86,17 +89,19 @@ def _validate(view, post_data, **kwargs):
         return e
     return validated_data
 
+
 class WellListView(ListView):
     template_name = 'well_list.html'
     context_object_name = 'well_list'
 
     def get(self, request, *args, **kwargs):
-         # A list of all the wells in the database
+        # A list of all the wells in the database
         try:
             wells = Well.objects.all()
             return render(request, self.template_name, {'wells': wells})
         except Well.DoesNotExist:
             return render(request, self.template_name, {'wells': None})
+
 
 class WellFormView(FormView):
     template_name = 'well.html'
@@ -110,7 +115,7 @@ class WellFormView(FormView):
         # It will be ignored later.
         if 'id' not in post_data:
             post_data['id'] = 1
-        
+
         checked_well = _validate(self, post_data=post_data, model_name='Well')
         # print("DB, Checked well: " + checked_well)
 
@@ -154,6 +159,8 @@ class WellFormView(FormView):
 #   -  core_section_name: should be auto-filled based on the well name, the core number and the core section number for example DELGT01-C1-53
 #   -  If the use has selected catcher and it is preceeded by a core then the core_section_name should be auto-filled based on the preceding core number and the core section number for example DELGT01-C1-53-CC54
 #
+
+
 class WellCoreListView(ListView):
     model = Well
     template_name = 'well_core_list.html'
@@ -172,6 +179,7 @@ class WellCoreListView(ListView):
         except Well.DoesNotExist:
             return render(request, self.template_name, {'well': None, 'cores': None})
 
+
 class CoreFormView(FormView):
     # model = Well
     template_name = 'core.html'
@@ -184,14 +192,14 @@ class CoreFormView(FormView):
         well_name = self.request.GET.get('well_name')
         initial['well'] = well_name
         return initial
-    
+
     # Create section name based on the well name, the core number and the core section number
     def post(self, request, *args, **kwargs):
         post_data = request.POST.dict()
 
         if 'id' not in post_data:
             post_data['id'] = 1
-        
+
         # Add the core section name to the post data so that it can be validated
         core_section_name = f"{post_data.get('well')}-{post_data.get('core_number')}-{post_data.get('core_section_number')}"
         post_data['core_section_name'] = core_section_name
@@ -202,7 +210,7 @@ class CoreFormView(FormView):
             return self.form_invalid(form)
         print(post_data)
         checked_core = _validate(self, post_data=post_data, model_name='Core')
-        
+
         if checked_core is not None:
             if checked_core is ValidationError:
                 form = self.get_form()
@@ -218,4 +226,3 @@ class CoreFormView(FormView):
         else:
             print(form.errors)
             return self.form_invalid(form)
-        
