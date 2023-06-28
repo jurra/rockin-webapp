@@ -25,6 +25,9 @@ urlpatterns = [
     path('contacts/edit/<int:pk>/', views.edit, name='edit'),
     path('contacts/create/', views.create, name='create'),
     path('contacts/delete/<int:pk>/', views.delete, name='delete'),
-    path('wells/create/', views.WellFormView.as_view(), name='wells'),
+    path('wells/create/', views.WellFormView.as_view(), name='well_create'),
     path('cores/create/', views.CoreFormView.as_view(), name='cores'),
+    path('wells/', views.WellListView.as_view(), name='well_list'),
+    path('wells/<int:pk>/', views.WellCoreListView.as_view(), name='well_core_list'),
+
 ]

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% if wells %}
+    <h1>Wells:</h1>
+    <ul>
+        {% for well in wells %}
+            <li><a href="{% url 'well_core_list' pk=well.pk %}">{{ well }}</a></li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No wells available.</p>
+{% endif %}
+
+<!-- Here we want to add the option of creating a new well -->
+<a href="{% url 'well_create' %}">Create a new well</a>
+{% endblock %}

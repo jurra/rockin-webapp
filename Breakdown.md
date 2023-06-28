@@ -1,40 +1,46 @@
 DEV NOTES
 
 URGENT:
+- [X We dont move on with this idea] Discuss with Liliana the idea of generating core entities automatically as planned, and then edit them later....
+    - For example once we start a well this could be setup by adding some default parameters that can be then applied to all cores for example...
+- Definition to solve some issues:
+    - When we create a core it should already be related to a well, then the form for creating a core should be a subform of the well form
 
 
+- TASKS:
+    - Fix the available core section number based on the last section number, for example:
+        starting from 0 then 0 should 1 should be the minimum available number
+        If a first corecatcher is entered following the first core then the available number should be 3
+    - Registered by field should be automatically filled with the user that is logged in
+    - Change the project so that it works with postgresql
+    - Install `django-crispy-forms` to apply bootstrap to the forms templates
+    - List all the acceptance criteria for the project including the postgresql database backend
 
-TASKS:
-- Fix the available core section number based on the last section number, for example:
-    starting from 0 then 0 should 1 should be the minimum available number
-    If a first corecatcher is entered following the first core then the available number should be 3
-- Registered by field should be automatically filled with the user that is logged in
-- Change the project so that it works with postgresql
-- Install `django-crispy-forms` to apply bootstrap to the forms templates
-- List all the acceptance criteria for the project including the postgresql database backend
-
-STORY: User management
+- STORY: User management
     TASKS:
         - [ ] Setup django authentication
 
 
-STORY: Admin and users with rights should be able to read data directly from the database
+- STORY: Admin and users with rights should be able to read data directly from the database
     AC: Access should be provided so that people can explore data with python
     AC: Access should be provided so that people can explore data with an SQL client like pgadming for example.
 
-STORY: Navigation of Rockin webapp
+- EPIC: Navigation of Rockin webapp
     AC: List of wells should be presented in the home page
-    AC: List of cores should be presented in the home page
-    AC: Global well selected to introduce cores should be presented
+    AC: List of cores should be presented in the home page??
+    AC: - [x] Well selected to with list of cores should be presented
     AC: Search by date, depth, etc... ???
 
-STORY: Relate data entry to user
+    - STORY: Well list to select on which well to work
+
+
+- STORY: Relate data entry to user
     AC: User should be registered by sys admin
     AC: User should be logged in to enter data
         (THiS IS WRONG AC)AC: [] Registered by should be a list of users that are registered in the system
 
 
-STORY: Introduce Well data
+- STORY: Introduce Well data
     TASKS:
         - [x] Create the model in models.py
         - [x] Create the form with fields all
@@ -50,7 +56,7 @@ STORY: Introduce Well data
         AC: User should be able to see a list of the last 10 wells entered
         AC: Wells should be added by admin, admin should decide which well will be used as a reference for the core data
 
-STORY: Introduce core data
+- STORY: Introduce core data
     TASKS:
         - [x] Create the model in models.py
         - [x] Create the form with fields all
@@ -68,7 +74,7 @@ STORY: Introduce core data
         - [ ] Make a list of GUI related acceptance criteria
 
         **Must have:**
-        AC: [] 
+        AC: [] User should be able to add cores to a selected well, the well should be selected from a list of wells
         AC: [] If a core is preceeded by a core_catcher then keep the count of the core catcher for the next core... 
             For example, if the last core_catcher was 3 then the next core should be 4, 5, 6, etc. And the preceding core should be 2.
         AC: [x] All numeric fields should be higher than 0
@@ -95,7 +101,7 @@ STORY: Introduce core data
         AC: Help of fields should be descriptive and provide even examples
         AC: A dialog box with a view of how the core data will look like should be presented before the user submits the form
 
-STORY: Introduce core catcher data based on available cores
+- STORY: Introduce core catcher data based on available cores
     TASKS:
         - [ ] Create the model in models.py
         - [ ] Create the form with fields all
@@ -129,12 +135,12 @@ STORY: Introduce core catcher data based on available cores
     AC: Should be created from the same create core form
     AC: Should only be allowed to enter if there is a preceeding core that matches the core_section_number. 
 
-STORY: Edit core data so that user can add optional fields later or correct certain data
+- STORY: Edit core data so that user can add optional fields later or correct certain data
     AC: User should be able to edit core data
     AC: User should be able to correct certain data???
 
 
-STORY: Automatically post a core sample to ELAB journals to properly create stickers
+- STORY: Automatically post a core sample to ELAB journals to properly create stickers
     AC: If an entry is valid then a post request should be sent to ELAB journals to create a sticker via ELAB journals API
     AC: If the post the request is succesfull then a link to the sticker should be shown in the page
     AC: The sticker could be also presented in the page

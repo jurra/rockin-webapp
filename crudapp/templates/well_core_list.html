@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Well Name: {{ well }}</h1>
+<h2>Cores:</h2>
+<ul>
+  {% for core in cores %}
+    <li>{{ core.core_section_name }}</li>
+  {% empty %}
+    <li>No cores available.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

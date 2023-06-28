@@ -22,8 +22,6 @@ class IndexView(ListView):
         return Contact.objects.all()
 
 # CONTACT VIEW
-
-
 class ContactDetailView(DetailView):
     model = Contact
     template_name = 'contact-detail.html'
@@ -88,11 +86,22 @@ def _validate(view, post_data, **kwargs):
         return e
     return validated_data
 
+class WellListView(ListView):
+    template_name = 'well_list.html'
+    context_object_name = 'well_list'
+
+    def get(self, request, *args, **kwargs):
+         # A list of all the wells in the database
+        try:
+            wells = Well.objects.all()
+            return render(request, self.template_name, {'wells': wells})
+        except Well.DoesNotExist:
+            return render(request, self.template_name, {'wells': None})
 
 class WellFormView(FormView):
     template_name = 'well.html'
     form_class = WellForm
-    success_url = reverse_lazy('wells')
+    success_url = reverse_lazy('well_list')
 
     def post(self, request, *args, **kwargs):
         post_data = request.POST.dict()
@@ -145,6 +154,23 @@ class WellFormView(FormView):
 #   -  core_section_name: should be auto-filled based on the well name, the core number and the core section number for example DELGT01-C1-53
 #   -  If the use has selected catcher and it is preceeded by a core then the core_section_name should be auto-filled based on the preceding core number and the core section number for example DELGT01-C1-53-CC54
 #
+class WellCoreListView(ListView):
+    model = Well
+    template_name = 'well_core_list.html'
+    context_object_name = 'well_core_list'
+
+
+    def get(self, request, *args, **kwargs):
+        # A list of all the cores related to a well
+        try:
+            well = Well.objects.get(pk=self.kwargs['pk'])
+            cores = Core.objects.filter(well=well)
+
+            return render(request, self.template_name, {'well': well, 'cores': cores})
+
+        except Well.DoesNotExist:
+            return render(request, self.template_name, {'well': None, 'cores': None})
+
 class CoreFormView(FormView):
     template_name = 'core.html'
     form_class = CoreForm
@@ -176,7 +202,6 @@ class CoreFormView(FormView):
                     message = error['msg']
                     form.add_error(field, message)
                 return self.form_invalid(form)
-        print("DB, Checked core is valid")
         form = self.get_form()
         if form.is_valid():
             form.save()
