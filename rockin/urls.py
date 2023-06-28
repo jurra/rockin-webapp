@@ -29,5 +29,5 @@ urlpatterns = [
     path('cores/create/', views.CoreFormView.as_view(), name='cores'),
     path('wells/', views.WellListView.as_view(), name='well_list'),
     path('wells/<int:pk>/', views.WellCoreListView.as_view(), name='well_core_list'),
-
+    path('wells/<int:pk>/cores/create/', views.CoreFormView.as_view(), name='cores'),
 ]

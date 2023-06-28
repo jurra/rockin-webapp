@@ -10,4 +10,7 @@
     <li>No cores available.</li>
   {% endfor %}
 </ul>
+<!-- Add a button to create a core -->
+<a href="{% url 'cores' pk=well.pk%}">Add a core</a>
+
 {% endblock %}
