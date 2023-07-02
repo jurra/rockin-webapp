@@ -2,10 +2,13 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Contact, Well, Core
-from .forms import ContactForm, WellForm, CoreForm
+from django.db.models import Max
 from django.views.generic import ListView, DetailView, FormView
 from django.urls import reverse_lazy
+
+from .models import Contact, Well, Core
+from .forms import ContactForm, WellForm, CoreForm
+
 
 from pydantic import ValidationError
 
@@ -169,19 +172,17 @@ class WellCoreListView(ListView):
     success_url = reverse_lazy('cores')
 
     def get(self, request, *args, **kwargs):
-        # A list of all the cores related to a well
         try:
             well = Well.objects.get(pk=self.kwargs['pk'])
             cores = Core.objects.filter(well=well)
 
-            return render(request, self.template_name, {'well': well, 'cores': cores})
+            return render(request, self.template_name, {'well': well, 
+                                                        'cores': cores})
 
         except Well.DoesNotExist:
             return render(request, self.template_name, {'well': None, 'cores': None})
 
-
 class CoreFormView(FormView):
-    # model = Well
     template_name = 'core.html'
     form_class = CoreForm
     success_url = reverse_lazy('cores')
@@ -191,6 +192,17 @@ class CoreFormView(FormView):
         # Retrieve the well name from your data source or database
         well_name = self.request.GET.get('well_name')
         initial['well'] = well_name
+
+        core_number = self.request.GET.get('core_number')
+        initial['core_number'] = core_number
+        if core_number:
+            latest_core_section_number = Core.objects.filter(core_number=core_number).aggregate(Max('core_section_number'))['core_section_number__max']
+            if latest_core_section_number is not None:
+                initial['core_section_number'] = latest_core_section_number + 1
+            else:
+                initial['core_section_number'] = 1
+        else:
+        
         return initial
 
     # Create section name based on the well name, the core number and the core section number

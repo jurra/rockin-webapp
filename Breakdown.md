@@ -16,6 +16,15 @@ URGENT:
     - Install `django-crispy-forms` to apply bootstrap to the forms templates
     - List all the acceptance criteria for the project including the postgresql database backend
 
+    Frontend:
+    - [ ] Package for prettier forms in django
+
+
+    Indexing:
+    - [ ] Indexes per sections
+    - [ ] Index cores
+    - [ ] Indexes per depth??
+
 - STORY: User management
     TASKS:
         - [ ] Setup django authentication
@@ -69,12 +78,17 @@ URGENT:
         Sub tasks:
         - [x] Fix what is failing in tests
         - [x] Pydantic validation??
-        - [] Javascript on html??? Not desirable if people have it disabled in browsers
-        - [ ] Package for prettier forms in django
+        - [x] Javascript on html??? Not desirable if people have it disabled in browsers
         - [ ] Make a list of GUI related acceptance criteria
 
         **Must have:**
-        AC: [] User should be able to add cores to a selected well, the well should be selected from a list of wells
+        AC: [x] For each new core section the count starts from zero, for example C2-1 should be the first core of the second section
+        as well as C3-1 should be the first core of the third section
+        AC: [ ] If user enters a value that is not sequential then a warning should be presented, for example if ther is no C1-1,
+        and the user enters C1-2 then a warning should be presented.
+        AC: [x] User should be able to add cores to a selected well, the well should be selected from a list of wells
+            SOLUTION: each element in the list of cores has a button that allows to add a core catcher
+                When the user clicks on the button a form is presented to enter with some pre-filled data
         AC: [] If a core is preceeded by a core_catcher then keep the count of the core catcher for the next core... 
             For example, if the last core_catcher was 3 then the next core should be 4, 5, 6, etc. And the preceding core should be 2.
         AC: [x] All numeric fields should be higher than 0
@@ -111,7 +125,7 @@ URGENT:
             - [ ] Prefill data from core section
             - [ ] In core number the number available should be dynamic based on the last number of the core or core_catcher
             - [ ] If a core_catcher preceeds a core_catcher, then the last count comes from the last core_catcher
-
+        AC: [ ] The core catcher is the last core of a section
         AC: [ ] User should be able to select a core from a list of cores
         AC: [ ] Cores and core catchers should be related in terms of sequence
         AC: [ ] Users need to be able to enter data of cores and core catchers in parallel, therefore we cannot define automatically the core catcher number..

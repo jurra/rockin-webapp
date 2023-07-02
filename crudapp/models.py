@@ -186,6 +186,12 @@ class Core(CoreBase):
         verbose_name = "Core"
         verbose_name_plural = "Cores"
 
+        indexes = [
+            models.Index(fields=['core_number', 'core_section_number']),
+        ]
+
+
+
     def __str__(self):
         serialized = model_to_dict(
             self, fields=[field.name for field in self._meta.fields])
