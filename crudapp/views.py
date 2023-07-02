@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Max
 from django.views.generic import ListView, DetailView, FormView
 from django.urls import reverse_lazy
+from django.utils import timezone
 
 from .models import Contact, Well, Core
 from .forms import ContactForm, WellForm, CoreForm
@@ -120,7 +121,6 @@ class WellFormView(FormView):
             post_data['id'] = 1
 
         checked_well = _validate(self, post_data=post_data, model_name='Well')
-        # print("DB, Checked well: " + checked_well)
 
         if checked_well is not None:
             if type(checked_well) is ValidationError:
@@ -189,6 +189,10 @@ class CoreFormView(FormView):
 
     def get_initial(self):
         initial = super().get_initial()
+
+        # Propose the user collection date as the current date and time
+        initial['collection_date'] = timezone.now()
+
         # Retrieve the well name from your data source or database
         well_name = self.request.GET.get('well_name')
         initial['well'] = well_name
@@ -201,8 +205,6 @@ class CoreFormView(FormView):
                 initial['core_section_number'] = latest_core_section_number + 1
             else:
                 initial['core_section_number'] = 1
-        else:
-        
         return initial
 
     # Create section name based on the well name, the core number and the core section number

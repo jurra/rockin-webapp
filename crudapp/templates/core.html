@@ -14,10 +14,12 @@
     const coreNumberField = document.getElementById('id_core_number');
     const coreSectionField = document.getElementById('id_core_section_number');
     const coreSectionNameField = document.getElementById('id_core_section_name');
+    const collectionDateField = document.getElementById('id_collection_date');
 
     // Set well name to the well from form initial
     wellNameSectionField.value = '{{ form.initial.well }}';
     coreSectionField.value = '{{ form.initial.core_section_number }}';
+    collectionDateField.value = '{{ form.initial.collection_date }}';
 
     function updateCoreSectionName() {
       const wellName = wellNameSectionField.value;
