@@ -11,6 +11,32 @@
   {% endfor %}
 </ul>
 <!-- Add a button to create a core -->
-<a href="{% url 'cores' pk=well.pk %}?well_name={{ well.name }}">Add a core</a>
+<!-- <a href="{% url 'cores' pk=well.pk %}?well_name={{ well.name }}">Add a core</a> -->
+<form id="core-form" method="POST" action="{% url 'cores' pk=well.pk %}?well_name={{ well.name }}">
+  {% csrf_token %}
+  <select name="core_number">
+    <option value="">Select Core Number</option>
+    <option value="C1" {% if core_number == 'C1' %}selected{% endif %}>C1</option>
+    <option value="C2" {% if core_number == 'C2' %}selected{% endif %}>C2</option>
+    <option value="C3" {% if core_number == 'C3' %}selected{% endif %}>C3</option>
+    <option value="C4" {% if core_number == 'C4' %}selected{% endif %}>C4</option>
+    <option value="C5" {% if core_number == 'C5' %}selected{% endif %}>C5</option>
+    <option value="C6" {% if core_number == 'C6' %}selected{% endif %}>C6</option>
+    <option value="C7" {% if core_number == 'C7' %}selected{% endif %}>C7</option>
+    <option value="C8" {% if core_number == 'C8' %}selected{% endif %}>C8</option>
+    <option value="C9" {% if core_number == 'C9' %}selected{% endif %}>C9</option>
+  </select>
+  <input type="hidden" name="well_name" value="{{ well_name }}">
+  <button type="submit">Add a core</button>
+</form>
+<script>
+  document.getElementById('core-form').addEventListener('submit', function(event) {
+    var coreNumberSelect = document.querySelector('[name="core_number"]');
+    if (coreNumberSelect.value === '') {
+      event.preventDefault();
+      alert('Please select a core number.');
+    }
+  });
+</script>
 
 {% endblock %}

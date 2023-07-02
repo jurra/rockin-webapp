@@ -5,6 +5,7 @@
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
+    {{ form.initial }}
     <button type="submit">Create</button>
   </form>
   
@@ -14,6 +15,9 @@
     const coreNumberField = document.getElementById('id_core_number');
     const coreSectionField = document.getElementById('id_core_section_number');
     const coreSectionNameField = document.getElementById('id_core_section_name');
+
+    // Set well name to the well from form initial
+    wellNameSectionField.value = '{{ form.initial.well }}';
 
     function updateCoreSectionName() {
       const wellName = wellNameSectionField.value;
