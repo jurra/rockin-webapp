@@ -176,7 +176,7 @@ class WellCoreListView(ListView):
             well = Well.objects.get(pk=self.kwargs['pk'])
             cores = Core.objects.filter(well=well)
 
-            return render(request, self.template_name, {'well': well, 
+            return render(request, self.template_name, {'well': well,
                                                         'cores': cores})
 
         except Well.DoesNotExist:
@@ -185,7 +185,7 @@ class WellCoreListView(ListView):
 class CoreFormView(FormView):
     template_name = 'core.html'
     form_class = CoreForm
-    success_url = reverse_lazy('cores')
+    success_url = reverse_lazy('well_core_list')
 
     def get_initial(self):
         initial = super().get_initial()
@@ -200,7 +200,8 @@ class CoreFormView(FormView):
         core_number = self.request.GET.get('core_number')
         initial['core_number'] = core_number
         if core_number:
-            latest_core_section_number = Core.objects.filter(core_number=core_number).aggregate(Max('core_section_number'))['core_section_number__max']
+            latest_core_section_number = Core.objects.filter(core_number=core_number).aggregate(
+                Max('core_section_number'))['core_section_number__max']
             if latest_core_section_number is not None:
                 initial['core_section_number'] = latest_core_section_number + 1
             else:
@@ -220,7 +221,8 @@ class CoreFormView(FormView):
 
         if Core.objects.filter(core_section_name=core_section_name).exists():
             form = self.get_form()
-            form.add_error('core_section_name', 'This core already exists.')
+            form.add_error(
+                'core_section_name', f'A core with name {core_section_name} already exists. Please try again with a number bigger than {post_data.get("core_section_number") }.')
             return self.form_invalid(form)
         print(post_data)
         checked_core = _validate(self, post_data=post_data, model_name='Core')
@@ -232,7 +234,9 @@ class CoreFormView(FormView):
                     field = error['loc'][0]
                     message = error['msg']
                     form.add_error(field, message)
+
                 return self.form_invalid(form)
+
         form = self.get_form()
         if form.is_valid():
             form.save()
