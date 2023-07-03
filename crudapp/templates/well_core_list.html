@@ -10,8 +10,6 @@
     <li>No cores available.</li>
   {% endfor %}
 </ul>
-<!-- Add a button to create a core -->
-<!-- <a href="{% url 'cores' pk=well.pk %}?well_name={{ well.name }}">Add a core</a> -->
 <form id="core-form" method="POST" action="{% url 'cores' pk=well.pk %}?well_name={{ well.name }}&core_number=">
   {% csrf_token %}
   <select name="core_number">
@@ -30,16 +28,16 @@
   <button type="submit">Add a core</button>
 </form>
 <script>
-  document.getElementById('core-form').addEventListener('submit', function(event) {
-    var coreNumberValue = document.querySelector('[name="core_number"]');
-    if (coreNumberValue === '') {
-      event.preventDefault();
-      alert('Please select a core number.');
-    } else {
-      var actionUrl = "{% url 'cores' pk=well.pk %}?well_name={{ well.name }}&core_number=" + encodeURIComponent(coreNumberValue.value);
-      document.getElementById('core-form').action = actionUrl;
-    }
-  });
+    document.getElementById('core-form').addEventListener('submit', function(event) {
+      var coreNumberValue = document.querySelector('[name="core_number"]');
+      if (coreNumberValue.value === "") {
+        event.preventDefault();
+        alert('Please select a core number.');
+      } else {
+        var actionUrl = "{% url 'cores' pk=well.pk %}?well_name={{ well.name }}&core_number=" + encodeURIComponent(coreNumberValue.value);
+        document.getElementById('core-form').action = actionUrl;
+      }
+    });
 </script>
 
 {% endblock %}

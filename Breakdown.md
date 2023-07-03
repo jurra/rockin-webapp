@@ -82,6 +82,8 @@ URGENT:
         - [ ] Make a list of GUI related acceptance criteria
 
         **Must have:**
+        AC: [x] User can not create a core without previously specifying a core number for example C1, C2, etc.
+        AC: [x] Collection date is prefilled
         AC: [x] For each new core section the count starts from zero, for example C2-1 should be the first core of the second section
         as well as C3-1 should be the first core of the third section
         AC: [ ] If user enters a value that is not sequential then a warning should be presented, for example if ther is no C1-1,
