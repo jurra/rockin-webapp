@@ -20,6 +20,12 @@ class Contact(models.Model):
     def __str__(self):
         return self.firstName
 
+# We need to create a custom field for the PositivePositiveFloatField to set it always to positive
+class PositiveFloatField(models.FloatField):
+    def formfield(self, **kwargs):
+        defaults = {'min_value': 0}
+        defaults.update(kwargs)
+        return super().formfield(**defaults)
 
 class Well(models.Model):
     # id = models.AutoField(primary_key=True)
@@ -121,18 +127,18 @@ class Core(CoreBase):
         help_text="The type of the core",
         default=''
     )
-    top_depth = models.FloatField(
+    top_depth = PositiveFloatField(
         help_text="The top depth of the section of a meter sample")
-    bottom_depth = models.FloatField(
+    bottom_depth = PositiveFloatField(
         help_text="The bottom depth of the section of a meter sample", null=True, blank=True)
-    core_section_length = models.FloatField(
+    core_section_length = PositiveFloatField(
         null=True,
         blank=True,
         help_text="The length of the section of a meter sample"
     )
-    core_recovery = models.FloatField(
+    core_recovery = PositiveFloatField(
         null=True, blank=True, help_text="The recovery of the material in the core liner")
-    core_diameter = models.FloatField(
+    core_diameter = PositiveFloatField(
         null=True, blank=True, help_text="The diameter of the core in inches")
     CORING_METHOD_CHOICES = [
         ('Motor', 'Motor'),
@@ -172,13 +178,13 @@ class Core(CoreBase):
         blank=True,
         help_text="The preservation method used for the core"
     )
-    core_weight = models.FloatField(
+    core_weight = PositiveFloatField(
         null=True, blank=True, help_text="The weight of the core in kilograms")
     ct_scanned = models.BooleanField(
         null=True, blank=True, help_text="Whether the core was CT scanned or not")
     gamma_ray = models.BooleanField(
         null=True, blank=True, help_text="Whether the core was gamma ray scanned or not")
-    radiation = models.FloatField(
+    radiation = PositiveFloatField(
         null=True, blank=True, help_text="The radiation of the core in Bq units")
 
     class Meta:
@@ -223,7 +229,7 @@ class CoreChip(RockinBase):
     )
     core_chip_name = models.CharField(
         max_length=255, help_text="The name of the core chip that is generated based on well_name, core_number, core_section_number, core_chip_number and from_top_bottom")
-    core_chip_depth = models.FloatField(
+    core_chip_depth = PositiveFloatField(
         help_text="The depth of the core chip in meters")
     lithology = models.CharField(
         max_length=255, help_text="The lithology of the core chip")
@@ -243,7 +249,7 @@ class Cuttings(RockinBase):
         help_text="The predefined name of the cuttings")
     cuttings_name = models.CharField(
         max_length=255, help_text="The name of the cuttings")
-    cuttings_depth = models.FloatField(
+    cuttings_depth = PositiveFloatField(
         help_text="The depth of the cuttings in meters")
     sample_state = models.CharField(max_length=100, choices=[('Wet washed', 'Wet washed'), (
         'Wet unwashed', 'Wet unwashed'), ('Dry washed', 'Dry washed')], help_text="The state of the sample")
@@ -253,7 +259,7 @@ class Cuttings(RockinBase):
         'Coring', 'Coring'), ('Rathole', 'Rathole'), ('Flushing', 'Flushing')], help_text="The method used for collecting the cuttings")
     drilling_method = models.CharField(max_length=100, null=True, blank=True, choices=[(
         'Rotary', 'Rotary'), ('Motor', 'Motor'), ('Both', 'Both')], help_text="The method used for drilling")
-    sample_weight = models.FloatField(
+    sample_weight = PositiveFloatField(
         null=True, blank=True, help_text="The weight of the sample in kilograms")
     dried_sample = models.BooleanField(
         null=True, blank=True, help_text="Whether the sample was dried or not")
