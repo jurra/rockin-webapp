@@ -79,7 +79,7 @@ URGENT:
         - [x] Fix what is failing in tests
         - [x] Pydantic validation??
         - [x] Javascript on html??? Not desirable if people have it disabled in browsers
-        - [ ] Make a list of GUI related acceptance criteria
+        - [x] Make a list of GUI related acceptance criteria
 
         **Must have:**
         AC: [x] User can not create a core without previously specifying a core number for example C1, C2, etc.
@@ -95,7 +95,7 @@ URGENT:
             For example, if the last core_catcher was 3 then the next core should be 4, 5, 6, etc. And the preceding core should be 2.
         AC: [x] All numeric fields should be higher than 0
         AC: [x] Avoid duplicate of core section name
-        AC: [] Avoid forcing user to select well name every time, create a way to globally select a well name and have a way to select a different well,
+        AC: [x] Avoid forcing user to select well name every time, create a way to globally select a well name and have a way to select a different well,
             The user should even be presented with a warning if the well name will be changed
         AC: [x] User should be able to select a well from a list of wells
         AC: [x] C1 to C9 dropdown for core number
@@ -104,8 +104,9 @@ URGENT:
         AC: [x] Present preview of core section name based on input data
         AC: User is not allowed to enter a core that already exists
             the system should check if the core number and the well name already exist
-        AC: Date entries should be valid and even automatically generated
-        AC: If a core_catcher has preceeded a following core then the core_catcher count should be considered also in the core section number. Therefore, if the last core_catcher was 3 then the next core should be 4, 5, 6, etc.
+        AC: [x] Date entries should be valid and even automatically generated
+        
+        X AC: If a core_catcher has preceeded a following core then the core_catcher count should be considered also in the core section number. Therefore, if the last core_catcher was 3 then the next core should be 4, 5, 6, etc.
         AC: Core section number should be a sequence from 0 to N for each well
 
 
