@@ -1,6 +1,20 @@
 DEV NOTES
 
 URGENT:
+- [] Core catcher logic
+- [] What fields do we want to let the user edit?
+    - [] Do not allow to edit core number
+
+- [] Core section length is calculated between top and button
+- [] AC: Why is the form without core bottom passing? Check tests...
+- [] AC: Core catcher fields should be prefilled with data from core section
+- [] AC: Core catcher should be able to be updated if other core sections are added.....
+    Scenarios where the core_catcher needs to be updated,
+        If a user aims to add a core that is bigger than the last core_catcher then the core_catcher needs to be updated....
+
+- [] AC: Allow to delete cores with a warning message.... Alerta roja....
+
+
 - [X We dont move on with this idea] Discuss with Liliana the idea of generating core entities automatically as planned, and then edit them later....
     - For example once we start a well this could be setup by adding some default parameters that can be then applied to all cores for example...
 - Definition to solve some issues:
@@ -8,10 +22,18 @@ URGENT:
 
 
 - TASKS:
-    - Fix the available core section number based on the last section number, for example:
-        starting from 0 then 0 should 1 should be the minimum available number
-        If a first corecatcher is entered following the first core then the available number should be 3
-    - Registered by field should be automatically filled with the user that is logged in
+    - [] Server setup
+        - [] Nginx
+        - [] Dockerfile
+        - [] Setup docker compose
+        - [] CI/CD with githooks
+        - [] Set docker volume in data/ folder
+        
+        Check if CI/CD works
+        Then check if the whole setup of nginx works
+        then combine.
+            
+    - AC: Registered by field should be automatically filled with the user that is logged in
     - Change the project so that it works with postgresql
     - Install `django-crispy-forms` to apply bootstrap to the forms templates
     - List all the acceptance criteria for the project including the postgresql database backend
