@@ -48,6 +48,8 @@ services:
      - ACME_URL="https://acme.sectigo.com/v2/GEANTOV"
      - ACME_KID
      - ACME_HMAC
+       #    env_file: 
+       # - /home/rocky/sectigo.env
 
 volumes:
   letsencrypt:
