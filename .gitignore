@@ -1,3 +1,6 @@
+# Ignore certificates
+letsencrypt/
+
 # ignore files _no_
 **/_no_**
 

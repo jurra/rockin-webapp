@@ -1,0 +1,56 @@
+version: "3.9"
+
+networks:
+  my_network:
+    driver: bridge
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    restart: always
+    networks:
+      - my_network
+
+  redis:
+    image: "redis:alpine"
+    restart: always
+    networks:
+      - my_network
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./letsencrypt:/etc/letsencrypt
+      - /var/www/html:/usr/share/nginx/html
+    depends_on:
+      - web
+    networks:
+      - my_network
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./letsencrypt:/etc/letsencrypt
+      - /var/www/html:/var/www/html
+    command: certonly --webroot --webroot-path=/var/www/html --agree-tos --non-interactive --email=jose.urra86@gmail.com --domains gsedata.citg.tudelft.nl --server ${ACME_URL} --eab-kid ${ACME_KID} --eab-hmac-key ${ACME_HMAC} --cert-name OVcert
+    networks:
+      - my_network
+    depends_on:
+      - nginx
+    restart: "no"
+    environment:
+     - ACME_URL="https://acme.sectigo.com/v2/GEANTOV"
+     - ACME_KID
+     - ACME_HMAC
+       #    env_file: 
+       # - /home/rocky/sectigo.env
+
+volumes:
+  letsencrypt:
+  html:
