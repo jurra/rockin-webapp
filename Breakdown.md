@@ -28,6 +28,36 @@ URGENT:
         - [] Setup docker compose
         - [] CI/CD with githooks
         - [] Set docker volume in data/ folder
+        move secrets in data/secrets/
+or a secrets directory/
+
+        Troubleshooting:
+        - Fixed the .env was missing the scripts
+        - Volume for less encript in the docker-compose we-service
+        - Fix the missing .dockerignore
+        - Expose the 5000 port from django
+        - Add gsedata.citign.tudelft.nl to allowed hosts....
+
+        Next steps:
+        - Check your project example
+        - Django examples for production (default is not for production)
+            - Django in production
+            - gunicorn
+        - .dockerignore
+
+
+        Recommendations from Arco:
+        - Dont build your image in your environment, instead use an image from a registry.
+        - Look production recommendations from django
+        - Kennismatrix.... gitlab...
+        - Created a script as an entry point
+        gunicorn:
+        - Separate the secrets into different .env files
+        .env.db..env.secrets...etc.., .env.prod 
+        - Use mysql workbench or postgresql pgadmin locally and ssh via, ssh with a portforward...
+        - We could also add access right...
+
+
         
         Check if CI/CD works
         Then check if the whole setup of nginx works
@@ -191,21 +221,3 @@ STORY: Introduce subsamples data
     cuttings
 STORY: Edit core data
 STORY: Capture reference to core images
-
-
-Common fields to all models
-
-All:
-registered_by mandatory for all
-well_name mandatory for all
-remarks mandatory for all
-lithology is for all but only mandatory for corechip, cuttings and microcores
-drilling_mud is optional for all
-collection_date is mandatory for all
-registration_time is generated automatically for all
-
-
-Corechip, core and core catcher
-core_number
-core_section_number
-core_section_name

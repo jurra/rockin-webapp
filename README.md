@@ -23,3 +23,6 @@ When running tests reuse the database. This will avoid having the database exist
 ```
 pytest --reuse-db
 ```
+
+## Production and server management notes
+
