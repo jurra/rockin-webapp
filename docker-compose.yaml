@@ -17,8 +17,6 @@ services:
       - redis
     networks:
       - my_network
-    volumes:
-      - letsencrypt:/etc/letsencrypt
   
   db:
     image: mysql:5.7
