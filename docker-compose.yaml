@@ -10,6 +10,8 @@ services:
     ports:
       - "5000:5000"
     restart: always
+    environment:
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
     depends_on:
       - db
       - redis
@@ -28,6 +30,7 @@ services:
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PWD}
       - MYSQL_ROOT_PASSWORD=${DB_PWD}
+      - MYSQL_HOST=${DB_HOST}
     env_file:
       - .env
     networks:
