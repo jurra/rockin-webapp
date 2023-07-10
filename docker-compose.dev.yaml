@@ -1,0 +1,48 @@
+version: "3.9"
+
+networks:
+  my_network:
+    driver: bridge
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    restart: always
+    depends_on:
+      - db
+      - redis
+    environment:
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS} 
+    env_file:
+      - .env
+    networks:
+      - my_network
+  
+  db:
+    image: mysql:5.7
+    ports:
+      - "3386:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: always
+    environment:
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PWD}
+      - MYSQL_ROOT_PASSWORD=${DB_PWD}
+      - MYSQL_HOST=${DB_HOST}
+    env_file:
+      - .env
+    networks:
+      - my_network
+
+  redis:
+    image: "redis:alpine"
+    restart: always
+    networks:
+      - my_network
+
+volumes:
+  mysql_data:

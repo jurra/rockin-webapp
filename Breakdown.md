@@ -28,6 +28,42 @@ URGENT:
         - [] Setup docker compose
         - [] CI/CD with githooks
         - [] Set docker volume in data/ folder
+        move secrets in data/secrets/
+or a secrets directory/
+
+        Troubleshooting:
+        Current status: managed to run the app in the server partially but getting error with tables not being recognized.
+        - datamodel is empty at the server
+        - docker image should make a migration before running the server
+
+        - Fixed the .env was missing the scripts
+        - x Volume for less encript in the docker-compose web-service
+        - X Fix the missing .dockerignore
+        - X Expose the 5000 port from django
+        - X Add gsedata.citign.tudelft.nl to allowed hosts....
+
+        - Do a local dockercompose setup that works
+
+        Next steps:
+        - Check your project example
+        - Django examples for production (default is not for production)
+            - Django in production
+            - gunicorn
+        - .dockerignore
+
+
+        Recommendations from Arco:
+        - Dont build your image in your environment, instead use an image from a registry.
+        - Look production recommendations from django
+        - Kennismatrix.... gitlab...
+        - Created a script as an entry point
+        gunicorn:
+        - Separate the secrets into different .env files
+        .env.db..env.secrets...etc.., .env.prod 
+        - Use mysql workbench or postgresql pgadmin locally and ssh via, ssh with a portforward...
+        - We could also add access right...
+
+
         
         Check if CI/CD works
         Then check if the whole setup of nginx works
@@ -108,13 +144,10 @@ URGENT:
         AC: [x] Collection date is prefilled
         AC: [x] For each new core section the count starts from zero, for example C2-1 should be the first core of the second section
         as well as C3-1 should be the first core of the third section
-        AC: [ ] If user enters a value that is not sequential then a warning should be presented, for example if ther is no C1-1,
-        and the user enters C1-2 then a warning should be presented.
         AC: [x] User should be able to add cores to a selected well, the well should be selected from a list of wells
             SOLUTION: each element in the list of cores has a button that allows to add a core catcher
                 When the user clicks on the button a form is presented to enter with some pre-filled data
-        AC: [] If a core is preceeded by a core_catcher then keep the count of the core catcher for the next core... 
-            For example, if the last core_catcher was 3 then the next core should be 4, 5, 6, etc. And the preceding core should be 2.
+
         AC: [x] All numeric fields should be higher than 0
         AC: [x] Avoid duplicate of core section name
         AC: [x] Avoid forcing user to select well name every time, create a way to globally select a well name and have a way to select a different well,
@@ -128,8 +161,12 @@ URGENT:
             the system should check if the core number and the well name already exist
         AC: [x] Date entries should be valid and even automatically generated
         
-        X AC: If a core_catcher has preceeded a following core then the core_catcher count should be considered also in the core section number. Therefore, if the last core_catcher was 3 then the next core should be 4, 5, 6, etc.
+        DEPRECATED ACCEPTANCE CRITERIA FOR CORE FEATURE:
         AC: Core section number should be a sequence from 0 to N for each well
+        AC: [] If a core is preceeded by a core_catcher then keep the count of the core catcher for the next core... 
+        For example, if the last core_catcher was 3 then the next core should be 4, 5, 6, etc. And the preceding core should be 2.
+        AC: Optional [ ] If user enters a value that is not sequential then a warning should be presented, for example if ther is no C1-1,
+        and the user enters C1-2 then a warning should be presented.
 
 
        **Would very useful to have:**
