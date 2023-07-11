@@ -93,6 +93,17 @@ def _validate(view, post_data, **kwargs):
         return e
     return validated_data
 
+class HomeView(ListView):
+    template_name = 'index.html'
+    context_object_name = 'well_list'
+
+    def get(self, request, *args, **kwargs):
+        # A list of all wells
+        try:
+            wells = Well.objects.all()
+            return render(request, self.template_name, {'wells': wells})
+        except Well.DoesNotExist:
+            return render(request, self.template_name, {'wells': None})
 
 class WellListView(ListView):
     template_name = 'well_list.html'
