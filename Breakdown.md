@@ -85,11 +85,13 @@ or a secrets directory/
 
 - STORY: User management
     TASKS:
-        - [ ] Setup django authentication
+        - [x] Setup django authentication
 
 
 - STORY: Admin and users with rights should be able to read data directly from the database
-    AC: Access should be provided so that people can explore data with python
+    AC: Registered by property should be automatically filled with the user that is logged in
+    AC: [x] User must be authenticated to login data, All links of the app domain should redirect to login page if user is not authenticated
+    AC: Access to the database should be provided so that people can explore data with python
     AC: Access should be provided so that people can explore data with an SQL client like pgadming for example.
 
 - EPIC: Navigation of Rockin webapp

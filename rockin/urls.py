@@ -16,12 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.contrib.auth import views as auth_views
 from crudapp import views
 
 urlpatterns = [
     path('', views.HomeView.as_view(), name='index'),
     path('admin/', admin.site.urls),
-    path("accounts/", include("django.contrib.auth.urls")),
+    path('accounts/login/', auth_views.LoginView.as_view(), name='login'),
+    path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('contacts/', views.IndexView.as_view(), name='index'),
     path('contacts/<int:pk>/', views.ContactDetailView.as_view(), name='detail'),
     path('contacts/edit/<int:pk>/', views.edit, name='edit'),
