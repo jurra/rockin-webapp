@@ -1,7 +1,36 @@
 import pytest
 
+from django.test import Client, RequestFactory
+
+from django.contrib.auth.models import User
+
 from crudapp.models import Well
 from crudapp.models import Core
+
+
+@pytest.fixture
+def session_key():
+    return '_auth_user_id'
+
+# Create a user object
+@pytest.fixture
+def user():
+    return User.objects.create_user(
+        username="testuser",
+        email="",
+        password="testpassword"
+    )
+
+@pytest.fixture
+def auth_client(user):
+    # The client needs to be logged in to access the views
+    client = Client()
+    client.login(username=user.username, password=user.password)
+    return client
+
+@pytest.fixture
+def request_factory():
+    return RequestFactory()
 
 @pytest.fixture
 def well():
@@ -9,14 +38,15 @@ def well():
     well = Well.objects.create(name="Test Well")
     return well
 
+
 @pytest.fixture
-def core_data(well):
+def core_data(well, user):
     # This is currently not simulating a payload from the frontend
     return {
         "registration_date": "2021-06-22 13:00:00",
         "core_type": "Core",
         "well": well,
-        "registered_by": "John Doe",
+        "registered_by": user,
         "collection_date": "2021-06-22 12:00:00",
         "remarks": "Test Remarks",
         "drilling_mud": "Water-based mud",

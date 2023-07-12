@@ -25,6 +25,9 @@ class CoreForm(ModelForm):
         
         fields = "__all__"
         exclude = [
+                   'registered_by',
+
+                   # THIS EXCLUSION IS JUST FOR DEV PURPOSES
                    'formation',
                    'lithology',
                    'core_weight',

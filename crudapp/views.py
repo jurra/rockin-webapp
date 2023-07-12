@@ -10,7 +10,6 @@ from django.utils import timezone
 from .models import Contact, Well, Core
 from .forms import ContactForm, WellForm, CoreForm
 
-
 from pydantic import ValidationError
 
 # Here we have access to the pydantic models,
@@ -157,29 +156,12 @@ class WellFormView(FormView):
             print(form.errors)
             return self.form_invalid(form)
 
-# CORE VIEW AND FORMSET
-# The core controller should be able to handle the following requests from
-# the entries in a form:
-# - Request to create a new core
-# - Identify the well from a dropdown list based on the wells registered in the database. For example DEL-GT-01
-# - Select the core type from a dropdown list of predefined values from Core, Core catcher
-#   - If the user selects the Core catcher, the controller should check if the preceding core matches the core number provided by the user
-#   - If there is no core that matches the catcher the form view should display an error message in the html page
-# - The core number should be selected from a dropdown list of predefined values from C1 to C9
-# - The core section number should be a number that is incremented by 1 for each section of 1 meter for example 53
-# - When user fills in the form some fields should be auto-filled
-#   -  registered_by: should be auto-filled with the user who is logged in
-#   -  registration_date: should be auto-filled with the current date and time
-#   -  core_section_name: should be auto-filled based on the well name, the core number and the core section number for example DELGT01-C1-53
-#   -  If the use has selected catcher and it is preceeded by a core then the core_section_name should be auto-filled based on the preceding core number and the core section number for example DELGT01-C1-53-CC54
-#
-
-
 class WellCoreListView(ListView):
+    ''' This view is used to list all the cores that belong to a well
+    '''
     model = Well
     template_name = 'well_core_list.html'
     context_object_name = 'well_core_list'
-    # Add a reverse lazy url to create a core
     success_url = reverse_lazy('cores')
 
     def get(self, request, *args, **kwargs):
@@ -194,18 +176,26 @@ class WellCoreListView(ListView):
             return render(request, self.template_name, {'well': None, 'cores': None})
 
 class CoreFormView(FormView):
+    '''This view is used to create a new core
+    '''
     template_name = 'core.html'
     form_class = CoreForm
     success_url = reverse_lazy('well_core_list')
 
     def get_initial(self):
+        ''' With this function we can pre-populate the form with initial values 
+        some of the values are based on the url parameters like for example the well name
+        '''
         initial = super().get_initial()
 
         # Propose the user collection date as the current date and time
         initial['collection_date'] = timezone.now()
 
-        # Retrieve the well name from your data source or database
+        # Define relationship between the core and the well
         well_name = self.request.GET.get('well_name')
+        well = Well.objects.get(name=well_name)
+        self.success_url = reverse_lazy('well_core_list', kwargs={'pk': well.pk})
+
         initial['well'] = well_name
 
         core_number = self.request.GET.get('core_number')
@@ -223,8 +213,14 @@ class CoreFormView(FormView):
     def post(self, request, *args, **kwargs):
         post_data = request.POST.dict()
 
+        # We do this because pydantic needs an id to be created
         if 'id' not in post_data:
             post_data['id'] = 1
+
+        if request.user.is_authenticated:
+            current_user = request.user
+        else:
+            raise Exception('User is not authenticated')
 
         # Add the core section name to the post data so that it can be validated
         core_section_name = f"{post_data.get('well')}-{post_data.get('core_number')}-{post_data.get('core_section_number')}"
@@ -235,7 +231,6 @@ class CoreFormView(FormView):
             form.add_error(
                 'core_section_name', f'A core with name {core_section_name} already exists. Please try again with a number bigger than {post_data.get("core_section_number") }.')
             return self.form_invalid(form)
-        print(post_data)
         checked_core = _validate(self, post_data=post_data, model_name='Core')
 
         if checked_core is not None:
@@ -250,8 +245,10 @@ class CoreFormView(FormView):
 
         form = self.get_form()
         if form.is_valid():
-            form.save()
-            return super().form_valid(form)
+            instance = form.save(commit=False)
+            instance.registered_by = current_user
+            instance.save()
+            return super().form_valid(instance)
         else:
             print(form.errors)
             return self.form_invalid(form)

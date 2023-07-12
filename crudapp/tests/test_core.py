@@ -1,18 +1,18 @@
 import copy
 
 import pytest
+from unittest.mock import patch
+
 from django.core.exceptions import ValidationError
 
+from django.db import connection
 from django.urls import reverse
-from django.test import RequestFactory
 from django.test import Client
 from crudapp.models import Core
 from crudapp.forms import CoreForm
 from crudapp.views import CoreFormView
 
 # TEST CORE MODEL
-
-
 @pytest.mark.django_db
 def test_core_fields(core_data):
     core = Core.objects.create(**core_data)
@@ -97,14 +97,70 @@ def test_well_cores_relationship(well, core_data):
     # assert that core1 section name is correctly generated
     # assert that core2 section name respects the sequence pattern... counting
 
-# test core view
+@pytest.mark.django_db
+def test_core_form_view_get_initial(well, request_factory):
+    print(f"This is the test well: {well.pk}")
+    view = CoreFormView()
+    
+    # The request url should be this one:/wells/1/cores/create/?well_name=DAP&core_number=C1
+    # Build request so that it resembles the one above
+    request = request_factory.get(reverse('cores'), {'well_name': well.name, 'core_number': 'C1'})
+    view.request = request
+
+    view.kwargs = {'pk': well.pk, 'well': well.name}  
+    initial = view.get_initial()
+
+    assert 'collection_date' in initial
+    assert 'well' in initial
+    assert 'core_number' in initial
+
+@pytest.mark.django_db
+@patch('crudapp.views.CoreFormView.get_initial')
+def test_core_form_view_post(mock_get_initial,auth_client, well, core_data, request_factory, user):
+    auth_client.force_login(user)
+
+    # Create a POST request with query parameters
+    url = reverse('cores')  # Replace 'core_form' with the actual URL name of the view
+
+    data = core_data
+    assert core_data['well'].name == well.name
+    assert core_data['well'].pk == well.pk
+
+    data['well'] = well.pk
+
+    request = request_factory.post(url, data=data)
+    request.user = user
+    assert request.user == user   
+
+    # Mock the behavior of get_initial method
+    mock_initial_values = {
+        'collection_date': core_data['collection_date'],
+        'well': core_data['well'],
+        'core_number': core_data['core_number'],
+        'core_section_number': core_data['core_section_number'],
+    }
+
+    mock_get_initial.return_value = mock_initial_values
+
+    # Instantiate and process the view
+    view = CoreFormView.as_view()
+    view.request = request
+    print(f"This is the view.request: {dir(view.request)}")
+    response = auth_client.post(view.request.path)
+
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db
-def test_core_form_view(core_data):
-    request = RequestFactory().get(reverse('cores'))
+def test_core_form_view(core_data, user, request_factory):
+    # Create a Client instance for handling requests
+    client = Client()
+
+    # Log in the user
+    client.force_login(user)
+    well = core_data['well']
     view = CoreFormView.as_view()
-    response = view(request)
+    response = client.get(reverse('cores'), {'well_name': well.name, 'core_number': 'C1'})
 
     # Test that the template used by the view is correct
     assert response.template_name == ['core.html']
@@ -113,9 +169,7 @@ def test_core_form_view(core_data):
     assert isinstance(response.context_data['form'], CoreForm)
 
     # Test valid form submission
-    form_data = copy.deepcopy(core_data)
-    request = RequestFactory().post(reverse('cores'), data=form_data)
-    response = view(request)
+    response = client.post(reverse('cores'), data=form_data)
 
     assert response.status_code == 302  # Redirect to success_url
     assert Core.objects.filter(core_number=form_data['core_number']).exists()
@@ -123,7 +177,7 @@ def test_core_form_view(core_data):
     # Test invalid form submission
     existing_core = Core.objects.first()
     form_data = {'core_number': existing_core.core_number}
-    request = RequestFactory().post(reverse('cores'), data=form_data)
+    request = request_factory.post(reverse('cores'), data=form_data)
     response = view(request)
     assert response.status_code == 200
     assert not response.context_data['form'].is_valid()

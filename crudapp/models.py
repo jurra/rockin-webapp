@@ -4,6 +4,7 @@ from django.db import models
 from django.utils import timezone
 from django.forms.models import model_to_dict
 from django.core.validators import MinValueValidator
+from django.contrib.auth.models import User
 
 
 class Contact(models.Model):
@@ -46,10 +47,7 @@ class RockinBase(models.Model):
     registration_date = models.DateTimeField(
         help_text="The time when the core was registered in the database",
         auto_now_add=True)
-    # well_name = models.CharField(
-    #     max_length=255, help_text="The name of the well")
-    registered_by = models.CharField(
-        max_length=255, help_text="The user who registered the core")
+    registered_by = models.ForeignKey(User, on_delete=models.CASCADE)
     collection_date = models.DateTimeField(
         help_text="The date when the core was collected", default=timezone.now)
     remarks = models.CharField(
