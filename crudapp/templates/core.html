@@ -10,37 +10,49 @@
   </form>
   <script src="{% static 'js/main.js' %}"></script>
   <script>
-    const coreTypeField = document.getElementById('id_core_type');
-    const wellNameSectionField = document.getElementById('id_well');
-    const coreNumberField = document.getElementById('id_core_number');
-    const coreSectionField = document.getElementById('id_core_section_number');
-    const coreSectionNameField = document.getElementById('id_core_section_name');
-    const collectionDateField = document.getElementById('id_collection_date');
+    // Define initial values server-side
+    const initialValues = {
+      id_core_type: 'Core',
+      id_well: '{{ form.initial.well }}',
+      id_core_number: '{{ form.initial.core_number }}',
+      id_core_section_number: '{{ form.initial.core_section_number }}',
+      id_core_section_name: '{{ form.initial.core_section_name }}',
+      id_collection_date: '{{ form.initial.collection_date }}'
+    };
 
-    // Set well name to the well from form initial
-    wellNameSectionField.value = '{{ form.initial.well }}';
-    coreSectionField.value = '{{ form.initial.core_section_number }}';
-    collectionDateField.value = '{{ form.initial.collection_date }}';
+    // Capture field names
+    const fieldNames = Object.keys(initialValues);
 
-    function updateCoreSectionName() {
-      const wellName = wellNameSectionField.value;
-      const coreNumber = coreNumberField.value;
-      const coreSectionNumber = coreSectionField.value;
-      coreSectionNameField.value = joinNameComponents([wellName, coreNumber, coreSectionNumber]);
+    function updateCoreSectionName(domElements) {  
+      console.log('updateCoreSectionName');
+      console.log(domElements.id_well.value);    
+      const wellName = domElements.id_well.value;
+      const coreNumber = domElements.id_core_number.value;
+      const coreSectionNumber = domElements.id_core_section_number.value;
+      domElements.id_core_section_name.value = joinNameComponents([wellName, coreNumber, coreSectionNumber]);
 
       // A core catcher depends on a core section name
-      if (coreTypeField.value === 'Core catcher') {
-        countForCC = parseInt(coreSectionField.value) + 1;
-        coreSectionNameField.value = joinNameComponents([wellName, coreNumber, coreSectionNumber, `CC${countForCC}`]);
+      if (domElements.id_core_type.value === 'Core catcher') {
+        console.log('Core section number');
+        console.log(domElements.id_core_section_number.value);
+        countForCC = parseInt(domElements.id_core_section_number.value) + 1;
+        domElements.id_core_section_name.value = joinNameComponents([wellName, coreNumber, coreSectionNumber, `CC${countForCC}`]);
       }
     }
 
-    coreNumberField.addEventListener('input', updateCoreSectionName);
-    coreNumberField.addEventListener('input', updateCoreSectionName);
-    coreSectionField.addEventListener('change', updateCoreSectionName);
+    const DOMFields = createDOMElementsFactory(fieldNames);
 
-    // Set initial value of core section name
-    updateCoreSectionName();
-    setInterval(updateCoreSectionName, 500);
+    // Define event listeners
+    DOMFields.id_core_number.addEventListener('input', () => updateCoreSectionName(DOMFields));
+    DOMFields.id_core_section_name.addEventListener('change', () => updateCoreSectionName(DOMFields));
+    DOMFields.id_core_type.addEventListener('change', () => updateCoreSectionName(DOMFields));
+    DOMFields.id_well.addEventListener('change', () => updateCoreSectionName(DOMFields));
+
+    // Set form values from initial values
+    setFormValues(fieldNames, DOMFields, initialValues);
+    updateCoreSectionName(DOMFields);
+
+    // Listen to changes to update the core section name
+    setInterval(() => updateCoreSectionName(DOMFields), 500);
   </script>
 {% endblock %}
