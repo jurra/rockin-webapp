@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
   <h2>Create Core</h2>
@@ -7,7 +8,7 @@
     {{ form.as_p }}
     <button type="submit">Create</button>
   </form>
-  
+  <script src="{% static 'js/main.js' %}"></script>
   <script>
     const coreTypeField = document.getElementById('id_core_type');
     const wellNameSectionField = document.getElementById('id_well');
@@ -25,12 +26,12 @@
       const wellName = wellNameSectionField.value;
       const coreNumber = coreNumberField.value;
       const coreSectionNumber = coreSectionField.value;
-      coreSectionNameField.value = `${wellName}-${coreNumber}-${coreSectionNumber}`;
+      coreSectionNameField.value = joinNameComponents([wellName, coreNumber, coreSectionNumber]);
 
       // A core catcher depends on a core section name
       if (coreTypeField.value === 'Core catcher') {
         countForCC = parseInt(coreSectionField.value) + 1;
-        coreSectionNameField.value = `${wellName}-${coreNumber}-${coreSectionNumber}-CC${countForCC}`;
+        coreSectionNameField.value = joinNameComponents([wellName, coreNumber, coreSectionNumber, `CC${countForCC}`]);
       }
     }
 

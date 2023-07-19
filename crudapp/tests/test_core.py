@@ -5,10 +5,13 @@ from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 
+from django.test import RequestFactory
+from django.urls import reverse_lazy
+
 from django.db import connection
 from django.urls import reverse
 from django.test import Client
-from crudapp.models import Core
+from crudapp.models import Core, Well   
 from crudapp.forms import CoreForm
 from crudapp.views import CoreFormView
 
@@ -114,73 +117,46 @@ def test_core_form_view_get_initial(well, request_factory):
     assert 'well' in initial
     assert 'core_number' in initial
 
+
 @pytest.mark.django_db
-@patch('crudapp.views.CoreFormView.get_initial')
-def test_core_form_view_post(mock_get_initial,auth_client, well, core_data, request_factory, user):
-    auth_client.force_login(user)
+def test_core_form_view_post(auth_client, well, user, core_data):
+    # Create a POST request with form data
+    request_url = reverse('cores')  # Replace 'cores' with the actual URL name of the view
 
-    # Create a POST request with query parameters
-    url = reverse('cores')  # Replace 'core_form' with the actual URL name of the view
+    # Append query parameters to the success URL
+    query_params = {
+        'well_name': core_data['well'].name,
+        'core_number': 'C1'
+    }
+    request_url += '?' + '&'.join([f'{key}={value}' for key, value in query_params.items()])
 
-    data = core_data
-    assert core_data['well'].name == well.name
-    assert core_data['well'].pk == well.pk
-
-    data['well'] = well.pk
-
-    request = request_factory.post(url, data=data)
-    request.user = user
-    assert request.user == user   
-
-    # Mock the behavior of get_initial method
-    mock_initial_values = {
-        'collection_date': core_data['collection_date'],
-        'well': core_data['well'],
-        'core_number': core_data['core_number'],
-        'core_section_number': core_data['core_section_number'],
+    data = {
+        'registration_date': '2021-06-22 13:00:00',
+        'core_type': 'Core',
+        'well': well.name,  # Assuming well is an instance of the Well model
+        'registered_by': 'testuser',
+        'collection_date': '2021-06-22 12:00:00',
+        'remarks': 'Test Remarks',
+        'drilling_mud': 'Water-based mud',
+        'lithology': 'Test Lithology',
+        'core_number': 'C1',
+        'core_section_number': 1,
+        'top_depth': 100.0,
+        'planned_core_number': 'C1',
+        'core_section_name': 'Test Well-C1-1',
+        'user': user.pk,  # Assuming user is an instance of the User model
     }
 
-    mock_get_initial.return_value = mock_initial_values
+    auth_client.force_login(user)
+    response = auth_client.post(request_url, data=data)
 
-    # Instantiate and process the view
-    view = CoreFormView.as_view()
-    view.request = request
-    print(f"This is the view.request: {dir(view.request)}")
-    response = auth_client.post(view.request.path)
+    assert response.status_code == 302
+    assert Core.objects.filter(core_section_name=data['core_section_name']).exists()
 
-    assert response.status_code == 200
-
-
-@pytest.mark.django_db
-def test_core_form_view(core_data, user, request_factory):
-    # Create a Client instance for handling requests
-    client = Client()
-
-    # Log in the user
-    client.force_login(user)
-    well = core_data['well']
-    view = CoreFormView.as_view()
-    response = client.get(reverse('cores'), {'well_name': well.name, 'core_number': 'C1'})
-
-    # Test that the template used by the view is correct
-    assert response.template_name == ['core.html']
-
-    # Test that the form used by the view is correct
-    assert isinstance(response.context_data['form'], CoreForm)
-
-    # Test valid form submission
-    response = client.post(reverse('cores'), data=form_data)
-
-    assert response.status_code == 302  # Redirect to success_url
-    assert Core.objects.filter(core_number=form_data['core_number']).exists()
-
-    # Test invalid form submission
-    existing_core = Core.objects.first()
-    form_data = {'core_number': existing_core.core_number}
-    request = request_factory.post(reverse('cores'), data=form_data)
-    response = view(request)
-    assert response.status_code == 200
-    assert not response.context_data['form'].is_valid()
+    # Now we want to test invalid data
+    data['well'] = 'Invalid Well'
+    response = auth_client.post(request_url, data=data)
+    assert response.context_data['form'].errors['well'] == ['Select a valid choice. That choice is not one of the available choices.']
 
 
 # TODO: Test the sequence behaviour of core_catcher, cores and core_section_number
@@ -189,7 +165,6 @@ def test_core_catcher_sequence(core_data):
     pass
 
 
-# TODO: Test counter behaviour of core_section_number
 @pytest.mark.django_db
 def test_core_section_number_counter(core_data):
     '''Create in the following sequence:

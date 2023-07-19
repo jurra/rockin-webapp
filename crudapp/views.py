@@ -1,3 +1,4 @@
+from typing import Any
 from django.shortcuts import render
 
 # Create your views here.
@@ -77,7 +78,6 @@ def _validate(view, post_data, **kwargs):
 
     '''
     model_name = kwargs.get('model_name')
-    # post_data = request.POST.dict()
 
     try:
         # Get the correct model class for example Well, or Core
@@ -115,7 +115,6 @@ class WellListView(ListView):
             return render(request, self.template_name, {'wells': wells})
         except Well.DoesNotExist:
             return render(request, self.template_name, {'wells': None})
-
 
 class WellFormView(FormView):
     template_name = 'well.html'
@@ -182,31 +181,56 @@ class CoreFormView(FormView):
     form_class = CoreForm
     success_url = reverse_lazy('well_core_list')
 
+    # Define relationship between the core and the well
+    well_name = ""
+    well = None
+    core_number = None
+
+    def set_well_name_from_url(self):
+        self.well_name = self.request.GET.get('well_name')
+
+    def set_success_url(self,):
+        self.success_url = reverse_lazy('well_core_list', kwargs={'pk': self.well.pk})
+    
+    def set_well(self):
+        try:
+            self.well = Well.objects.get(name=self.well_name)
+        except Well.DoesNotExist:
+            self.well = None
+
+    def set_core_section_number(self):
+        self.core_number = self.request.GET.get('core_number')
+
+        # Based on the core number we get from the url, we propose the next core section number
+        # We also if the core_section_number is not provided, we propose 1 or the next number
+        if self.core_number:
+            # With this query we get the last count of the core_section_number for the current core number
+            latest_core_section_number = Core.objects.filter(core_number=self.core_number).aggregate(
+                Max('core_section_number'))['core_section_number__max']
+            if latest_core_section_number is not None:
+                return latest_core_section_number + 1
+            else:
+                return 1
+
     def get_initial(self):
-        ''' With this function we can pre-populate the form with initial values 
-        some of the values are based on the url parameters like for example the well name
+        ''' With this function we pre-populate the form with initial values to avoid that users
+        having to type the same values over and over again 
         '''
         initial = super().get_initial()
+
+        # Define all the initial values of the form object
+        self.set_well_name_from_url()
+        self.set_well()
+        self.set_success_url()
 
         # Propose the user collection date as the current date and time
         initial['collection_date'] = timezone.now()
 
-        # Define relationship between the core and the well
-        well_name = self.request.GET.get('well_name')
-        well = Well.objects.get(name=well_name)
-        self.success_url = reverse_lazy('well_core_list', kwargs={'pk': well.pk})
-
-        initial['well'] = well_name
+        initial['well'] = self.well_name
 
         core_number = self.request.GET.get('core_number')
         initial['core_number'] = core_number
-        if core_number:
-            latest_core_section_number = Core.objects.filter(core_number=core_number).aggregate(
-                Max('core_section_number'))['core_section_number__max']
-            if latest_core_section_number is not None:
-                initial['core_section_number'] = latest_core_section_number + 1
-            else:
-                initial['core_section_number'] = 1
+        initial['core_section_number'] = self.set_core_section_number()
         return initial
 
     # Create section name based on the well name, the core number and the core section number
@@ -222,8 +246,8 @@ class CoreFormView(FormView):
         else:
             raise Exception('User is not authenticated')
 
-        # Add the core section name to the post data so that it can be validated
-        core_section_name = f"{post_data.get('well')}-{post_data.get('core_number')}-{post_data.get('core_section_number')}"
+        # Add the core section name to the post data to make the post data valid
+        core_section_name = f"{post_data.get('well')}-{post_data.get('core_number')}-{post_data.get('core_section_number')}"        
         post_data['core_section_name'] = core_section_name
 
         if Core.objects.filter(core_section_name=core_section_name).exists():
@@ -252,3 +276,36 @@ class CoreFormView(FormView):
         else:
             print(form.errors)
             return self.form_invalid(form)
+
+class CoreChip(FormView):
+    template_name = 'corechip_form.html'
+    form_class = CoreForm
+    success_url = reverse_lazy('well_core_list')
+
+    def get_initial(self):
+        ''' With this function we can pre-populate the form with initial values 
+        some of the values are based on the url parameters like for example the well name
+        '''
+        initial = super().get_initial()
+        # Propose the user collection date as the current date and time
+        initial['collection_date'] = timezone.now()
+        
+        # Get the well to generate the success url
+        well_name = self.request.GET.get('well_name')
+        well = Well.objects.get(name=well_name)
+        self.success_url = reverse_lazy('well_core_list', kwargs={'pk': well.pk})
+
+        
+        initial['well'] = well_name
+        well_short_name = well.gen_short_name()
+        initial['well_short_name'] = well_short_name
+        pass
+
+    def post(self, request, *args, **kwargs):
+        post_data = request.POST.dict()
+        # core_chip_name = f"{post_data.get('well')}-{post_data.get('core_number')}-{post_data.get('core_section_number')}"
+        pass
+        # Check if the CoreChip already exists
+        # if CoreChip.objects.filter(core_chip_name=):
+        
+
