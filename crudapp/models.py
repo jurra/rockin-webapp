@@ -41,9 +41,16 @@ class Well(models.Model):
         # This needs to be as is otherwise the form will display all fields of the model
         # in the dropdown menu
         return self.name
+    
+    def gen_short_name(self):
+        short_name = self.name.split('-')
+        return ''.join(short_name)
 
 
 class RockinBase(models.Model):
+    well = models.ForeignKey(Well, on_delete=models.CASCADE,
+                help_text="The id of the well", related_name='corechips_well')
+
     registration_date = models.DateTimeField(
         help_text="The time when the core was registered in the database",
         auto_now_add=True)
@@ -205,9 +212,6 @@ class Core(CoreBase):
 
 
 class CoreChip(RockinBase):
-    # id = models.AutoField(primary_key=True, help_text="The id of the core")
-    well = models.ForeignKey(Well, on_delete=models.CASCADE,
-                             help_text="The id of the well", related_name='corechips_well')
     core_id = models.ForeignKey(
         'Core',
         on_delete=models.CASCADE,
