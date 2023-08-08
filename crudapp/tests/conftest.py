@@ -4,9 +4,7 @@ from django.test import Client, RequestFactory
 
 from django.contrib.auth.models import User
 
-from crudapp.models import Well
-from crudapp.models import Core
-
+from crudapp.models import Well, Core, CoreChip
 
 @pytest.fixture
 def session_key():
@@ -63,11 +61,11 @@ def invalid_date_time(well, core_data):
     core_data["registration_date"] = '2021-06-22'
 
 @pytest.fixture
-def core(well):
+def core(well, user):
     return Core.objects.create(
         well=well,
         registration_date="2021-06-22 13:00:00",
-        registered_by="John Doe",
+        registered_by=user,
         collection_date="2021-06-22 12:00:00",
         remarks="Test Remarks",
         drilling_mud="Water-based mud",
@@ -77,3 +75,60 @@ def core(well):
         top_depth=100.00,
     )
 
+@pytest.fixture
+def corechip_data(well, user, core):
+    '''
+    well
+    str type expected (type=type_error.str)
+    x registered_by
+    field required (type=value_error.missing)
+    core_number
+    field required (type=value_error.missing)
+    planned_core_number
+    field required (type=value_error.missing)
+    core_section_number
+    field required (type=value_error.missing)
+    core_section_name
+    field required (type=value_error.missing)
+    core_id
+    field required (type=value_error.missing)
+    '''
+    corechip = CoreChip.objects.create(
+        well=well,
+        registration_date = '2021-06-22 13:00:00',
+        collection_date='2021-06-22 12:00:00',
+        core_number=core.core_number,
+        core_section_number=core.core_section_number,
+        corechip_number='2',
+        drilling_mud='Water-based mud',
+        registered_by=user,
+        from_top_bottom='Top',  # Replace with the desired from_top_bottom choice
+        corechip_name=well.name + '-C1-2-CHB7',  
+        corechip_depth=10.0,  # Replace with the desired core_chip_depth
+        lithology='Sample Lithology',
+        remarks='Sample Remarks',
+        debris=False,  # Replace with the desired debris value
+        formation='Sample Formation',
+    )
+    return  {
+        # This is post data from the frontend
+        'well': corechip.well.id,
+        'well_name': well.name,
+        'registration_date': corechip.registration_date,
+        'registered_by': corechip.registered_by.id,
+        'collection_date': corechip.collection_date,
+        'core_number': corechip.core_number,
+        'planned_core_number': corechip.planned_core_number,
+        'core_section_number': corechip.core_section_number,
+        'core_section_name': corechip.core_section_name,
+        'drilling_mud': corechip.drilling_mud,
+        'corechip_number': corechip.corechip_number,
+        'from_top_bottom': corechip.from_top_bottom,
+        'corechip_name': corechip.corechip_name,
+        'corechip_depth': corechip.corechip_depth,
+        'lithology': corechip.lithology,
+        'remarks': corechip.remarks,
+        'debris': corechip.debris,
+        'formation': corechip.formation,
+    }
+    # return corechip_data

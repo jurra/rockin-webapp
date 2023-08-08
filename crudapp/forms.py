@@ -52,3 +52,10 @@ class CoreForm(ModelForm):
                 instance.save()
             return instance
 
+class CoreChipForm(ModelForm):
+    class Meta:
+        model = Core
+        fields = "__all__"
+        widgets = {
+            'core_section_name': TextInput(attrs={'readonly': 'readonly'}),
+        }
