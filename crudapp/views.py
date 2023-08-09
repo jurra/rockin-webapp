@@ -1,4 +1,6 @@
-from typing import Any
+import pprint
+
+from typing import Any, Dict
 from django.shortcuts import render
 
 # Create your views here.
@@ -8,8 +10,8 @@ from django.views.generic import ListView, DetailView, FormView
 from django.urls import reverse_lazy
 from django.utils import timezone
 
-from .models import Contact, Well, Core
-from .forms import ContactForm, WellForm, CoreForm
+from .models import Contact, Well, Core, CoreChip
+from .forms import ContactForm, WellForm, CoreForm, CoreChipForm
 
 from pydantic import ValidationError
 
@@ -26,8 +28,6 @@ class IndexView(ListView):
         return Contact.objects.all()
 
 # CONTACT VIEW
-
-
 class ContactDetailView(DetailView):
     model = Contact
     template_name = 'contact-detail.html'
@@ -73,9 +73,13 @@ def _validate(view, post_data, **kwargs):
     Args:
         view ([type]): [description], this is the view that is calling the function
         request ([type]): [description], this is the request object
+        kwargs ([type]): [description], this is a dictionary with the model name
 
     Returns:
+        validated_data ( )
 
+    Example:
+    >>> _validate(view=self, request=request, post_data=post_data, model_name='Well')
     '''
     model_name = kwargs.get('model_name')
 
@@ -86,8 +90,6 @@ def _validate(view, post_data, **kwargs):
         # Create a new instance of the specified model using the provided data
         # This will raise a ValidationError if the data is invalid
         validated_data = model(**post_data)
-        # print("DB, Validated data: " + type(validated_data))
-        # print(model_instance)
     except ValidationError as e:
         return e
     return validated_data
@@ -176,6 +178,8 @@ class WellCoreListView(ListView):
 
 class CoreFormView(FormView):
     '''This view is used to create a new core
+    AC: A new core form is presented to the user when makes a post request
+    to this url: well/<pk>/core/create
     '''
     template_name = 'core.html'
     form_class = CoreForm
@@ -211,7 +215,7 @@ class CoreFormView(FormView):
                 return latest_core_section_number + 1
             else:
                 return 1
-
+    
     def get_initial(self):
         ''' With this function we pre-populate the form with initial values to avoid that users
         having to type the same values over and over again 
@@ -255,6 +259,7 @@ class CoreFormView(FormView):
             form.add_error(
                 'core_section_name', f'A core with name {core_section_name} already exists. Please try again with a number bigger than {post_data.get("core_section_number") }.')
             return self.form_invalid(form)
+        
         checked_core = _validate(self, post_data=post_data, model_name='Core')
 
         if checked_core is not None:
@@ -277,35 +282,223 @@ class CoreFormView(FormView):
             print(form.errors)
             return self.form_invalid(form)
 
-class CoreChip(FormView):
+class CoreChipFormView(FormView):
+    '''AC: A new core form is presented to the user when makes a post request
+    to this url: well/<pk>/corechips/create'''
+
     template_name = 'corechip_form.html'
-    form_class = CoreForm
+    form_class = CoreChipForm
     success_url = reverse_lazy('well_core_list')
 
+    # A Well object
+    well = None
+    well_name = None
+    core_number = None
+
+    def set_well_name_from_url(self, well_name):
+        self.well_name = well_name
+
+    def set_success_url(self):
+        self.success_url = reverse_lazy('well_core_list', kwargs={'pk': self.well.pk})
+    
+    def set_well(self):
+        try:
+            self.well = Well.objects.get(name=self.well_name)
+        except Well.DoesNotExist:
+            self.well = None
+
+    def set_core_section_number(self):
+        self.core_number = self.request.GET.get('core_number')
+
+        # Based on the core number we get from the url, we propose the next core section number
+        # We also if the core_section_number is not provided, we propose 1 or the next number
+        if self.core_number:
+            # With this query we get the last count of the core_section_number for the current core number
+            latest_core_section_number = Core.objects.filter(core_number=self.core_number).aggregate(
+                Max('core_section_number'))['core_section_number__max']
+            if latest_core_section_number is not None:
+                return latest_core_section_number + 1
+            else:
+                return 1
+    
     def get_initial(self):
-        ''' With this function we can pre-populate the form with initial values 
-        some of the values are based on the url parameters like for example the well name
+        ''' With this function we pre-populate the form with initial values to avoid that users
+        having to type the same values over and over again 
         '''
         initial = super().get_initial()
+
         # Propose the user collection date as the current date and time
         initial['collection_date'] = timezone.now()
-        
-        # Get the well to generate the success url
-        well_name = self.request.GET.get('well_name')
-        well = Well.objects.get(name=well_name)
-        self.success_url = reverse_lazy('well_core_list', kwargs={'pk': well.pk})
 
-        
-        initial['well'] = well_name
-        well_short_name = well.gen_short_name()
-        initial['well_short_name'] = well_short_name
-        pass
+        initial['well'] = self.well_name
+
+        core_number = self.request.GET.get('core_number')
+        initial['core_number'] = core_number
+        initial['core_section_number'] = self.set_core_section_number()
+        return initial
+    
+    def get(self, request, *args, **kwargs):
+        # Extract initial data from GET request parameters
+        data = {
+            'well_pk': request.GET.get('well_pk'),
+            'well_name': request.GET.get('well_name'),
+            'core_number': request.GET.get('core_number'),
+            'core_section_name': request.GET.get('core_section_name'),
+        }
+
+        self.initial = data
+        form = self.form_class(initial=data)
+
+        # Define all the initial values of the form object
+        self.set_well_name_from_url(data['well_name'])
+
+        # Set success url based on well pk
+        return render(request, self.template_name, {'form': form, **data, 
+                                                    'DEBUG': {
+                                                        'well_name': self.well_name,
+                                                    }})
 
     def post(self, request, *args, **kwargs):
+        # assert that well name is kwargs
+    
         post_data = request.POST.dict()
-        # core_chip_name = f"{post_data.get('well')}-{post_data.get('core_number')}-{post_data.get('core_section_number')}"
-        pass
-        # Check if the CoreChip already exists
-        # if CoreChip.objects.filter(core_chip_name=):
+
+        assert 'well_name' in post_data
+        self.set_well_name_from_url(well_name=post_data['well_name'])
+        self.set_well()
+        self.set_success_url()
+
+        if request.user.is_authenticated:
+            current_user = request.user
+        else:
+            raise Exception('User is not authenticated')
+    
+        # Add the corechip name to the post data to make the post data valid
+        corechip_name = f"{post_data.get('well')}-{post_data.get('core_number')}-{post_data.get('core_section_number')}-{post_data.get('corechip_number')}-{post_data.get('from_top_bottom')}"
+        # corechip_name = f{initial['well']}
+        post_data['corechip_name'] = corechip_name
+
+        if CoreChip.objects.filter(corechip_name=corechip_name).exists():
+            form = self.get_form()
+            form.add_error(
+                'corechip_name', f'A corechip with name {corechip_name} already exists. Please try again with a number bigger than {post_data.get("corechip_number") }.')
+            return self.form_invalid(form)
+
+        checked_corechip = _validate(self, post_data=post_data, model_name='CoreChip')
+
+        if checked_corechip is not None:
+            if checked_corechip is ValidationError:
+                form = self.get_form()
+                for error in checked_corechip.errors():
+                    field = error['loc'][0]
+                    message = error['msg']
+                    form.add_error(field, message)
+
+                return self.form_invalid(form)
+
+        form = self.get_form()
+        if form.is_valid():
+            instance = form.save(commit=False)
+            instance.registered_by = current_user
+            instance.save()
+            return super().form_valid(instance)
+        else:
+            print(form.errors)
+            return self.form_invalid(form)
+
+    # def set_well_name_from_url(self):
+    #     # This helps us to get the well name from the url, the well is passed as an id
+    #     # in the form of a query parameter /well/<pk>/corechips/
+    #     self.well_name = self.request.GET.get('well_name')
+
+    # def set_success_url(self,):
+    #     self.success_url = reverse_lazy('well_core_list', kwargs={'pk': self.well.pk})
+    
+    # def set_well(self):
+    #     try:
+    #         self.well = Well.objects.get(name=self.well_name)
+    #     except Well.DoesNotExist:
+    #         self.well = None
+
+    # def set_core_section_number(self):
+    #     self.core_number = self.request.GET.get('core_number')
+
+    #     # Based on the core number we get from the url, we propose the next core section number
+    #     # We also if the core_section_number is not provided, we propose 1 or the next number
+    #     if self.core_number:
+    #         # With this query we get the last count of the core_section_number for the current core number
+    #         latest_core_section_number = Core.objects.filter(core_number=self.core_number).aggregate(
+    #             Max('core_section_number'))['core_section_number__max']
+    #         if latest_core_section_number is not None:
+    #             return latest_core_section_number + 1
+    #         else:
+    #             return 1
+
+    # def get_initial(self):
+    #     ''' With this function we can pre-populate the form with initial values 
+    #     some of the values are based on the url parameters like for example the well name
+    #     '''
+    #     initial = super().get_initial()
+
+    #     # Define all the initial values of the form object
+    #     self.set_well_name_from_url()
+    #     self.set_well() 
+    #     assert self.well is not None
+    #     assert self.well_name is not None
+    #     self.set_success_url()
+
+    #     # Propose the user collection date as the current date and time
+    #     initial['collection_date'] = timezone.now()
+        
+    #     # Get the well to generate the success url
+    #     well_name = self.well_name
+    #     well = Well.objects.get(name=well_name)
+    #     self.success_url = reverse_lazy('well_core_list', kwargs={'pk': well.pk})
+
+    #     initial['well'] = well_name
+    #     well_short_name = well.gen_short_name()
+
+    #     core_section_name = self.request.GET.get('core_section_name')
+
+    #     initial['well_short_name'] = well_short_name
+    #     initial['core_section_name'] = core_section_name
+    #     return initial
+
+    # def post(self, request, *args, **kwargs):
+    #     post_data = request.POST.dict()
+
+    #     if request.user.is_authenticated:
+    #         current_user = request.user
+    #     else:
+    #         raise Exception('User is not authenticated')
+        
+    #     # corechip_name = f"{initial['well_short_name']}-{post_data.get('core_number')}-{post_data.get('core_section_number')}-{post_data.get('corechip_number')}-{post_data.get('from_top_bottom')}"
+        
+    #     # if corechip name is not in the post data, we add it, this could be possible wen directly posting
+    #     # for example in tests
+    #     # if 'corechip_name' not in post_data:
+    #     #     post_data['corechip_name'] = corechip_name
+
+    #     checked_corechip = _validate(self, post_data=post_data, model_name='CoreChip')
+
+    #     if checked_corechip is not None:
+    #         if checked_corechip is ValidationError:
+    #             form = self.get_form()
+    #             for error in checked_corechip.errors():
+    #                 field = error['loc'][0]
+    #                 message = error['msg']
+    #                 form.add_error(field, message)
+
+    #             return self.form_invalid(form)
+
+    #     form = self.get_form()
+    #     if form.is_valid():
+    #         instance = form.save(commit=False)
+    #         instance.registered_by = current_user
+    #         instance.save()
+    #         return super().form_valid(instance)
+    #     else:
+    #         print(form.errors)
+    #         return self.form_invalid(form)
         
 

@@ -73,6 +73,7 @@ def core(well, user):
         core_number="C1",
         core_section_number=1, # Should be a counter
         top_depth=100.00,
+        planned_core_number="C1",
     )
 
 @pytest.fixture
@@ -93,26 +94,32 @@ def corechip_data(well, user, core):
     core_id
     field required (type=value_error.missing)
     '''
+
+    # Shorten the name as it is required for the corechip name
+    well_name_short = well.gen_short_name()
+
     corechip = CoreChip.objects.create(
         well=well,
         registration_date = '2021-06-22 13:00:00',
         collection_date='2021-06-22 12:00:00',
         core_number=core.core_number,
         core_section_number=core.core_section_number,
+        planned_core_number=core.planned_core_number,
         corechip_number='2',
         drilling_mud='Water-based mud',
         registered_by=user,
         from_top_bottom='Top',  # Replace with the desired from_top_bottom choice
-        corechip_name=well.name + '-C1-2-CHB7',  
+        corechip_name=well_name_short + '-C1-2-CHB7',  
         corechip_depth=10.0,  # Replace with the desired core_chip_depth
         lithology='Sample Lithology',
         remarks='Sample Remarks',
         debris=False,  # Replace with the desired debris value
         formation='Sample Formation',
+        top_depth=100.0,  # Replace with the desired top_depth
     )
     return  {
         # This is post data from the frontend
-        'well': corechip.well.id,
+        'well': well.name,
         'well_name': well.name,
         'registration_date': corechip.registration_date,
         'registered_by': corechip.registered_by.id,
@@ -130,5 +137,6 @@ def corechip_data(well, user, core):
         'remarks': corechip.remarks,
         'debris': corechip.debris,
         'formation': corechip.formation,
+        'top_depth': corechip.top_depth,
+        'core_type': 'Core'
     }
-    # return corechip_data

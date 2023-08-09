@@ -1,4 +1,5 @@
 import copy
+from pprint import pprint
 
 import pytest
 from pydantic import ValidationError
@@ -80,8 +81,6 @@ def test_validate_corechip(corechip_data, corechip_post_request):
     invalid = _validate(corechip_view, corechip_data_copy, model_name='CoreChip')
     assert invalid.errors() is not None
 
-    # TODO: ideally validate should validate the post request
-
 def test_reject_duplicate_corechip():
     pass
 
@@ -154,10 +153,11 @@ def test_corechip_get_form(well, auth_client, user, core):
     assert response.context['core_number'] == core.core_number 
 
 @pytest.mark.django_db
-def test_corechip_initial(well, core, auth_client, user):
+def test_corechip_get(well, core, auth_client, user):
     # Now we check that initial values are set correctly
     auth_client.force_login(user)
     response = auth_client.get(reverse("corechips", kwargs={'pk': well.pk}), data={
+        'well_pk': well.id, # This is the well id
         'well_name': well.name,
         'core_number': core.core_number,
         'core_section_name': core.core_section_name,
@@ -165,12 +165,18 @@ def test_corechip_initial(well, core, auth_client, user):
 
     initial = response.context['form'].initial
 
+    assert initial['well_pk'] == str(well.id)
     assert initial['well_name'] == well.name
     assert initial['core_section_name'] == core.core_section_name
     assert initial['core_number'] == core.core_number
 
+    debug = response.context['DEBUG']
+    assert debug is not None
+    assert debug['well_name'] is not None
+    print(debug)
+
 @pytest.mark.django_db
-def test_corechip_post_request(auth_client, corechip_data, user, well):
+def test_corechip_post_request(auth_client, corechip_data, user, well, core):
     ''' 
     input: a post request with a corechip
     process: pydantic model vaidates the corechip
@@ -178,43 +184,30 @@ def test_corechip_post_request(auth_client, corechip_data, user, well):
     '''
     assert CorechipModel is not None
 
-    corechip_data_copy = copy.deepcopy(corechip_data)
-    corechip_data_copy['core_id'] = 2
+    auth_client.force_login(user)
+
+    response = auth_client.get(reverse("corechips", kwargs={'pk': well.pk}), data={
+        'well_pk': well.id, # This is the well id
+        'well_name': well.name,
+        'core_number': core.core_number,
+        'core_section_name': core.core_section_name,
+    })
+
+    initial = response.context['form'].initial
+
+    data = copy.deepcopy(corechip_data)
 
     corechip_view = CoreChipFormView()
-    valid = _validate(corechip_view, corechip_data_copy, model_name='CoreChip')
+    valid = _validate(corechip_view, data, model_name='CoreChip')
 
+    # add data in initial to data   
+    data.update(initial)
 
     # Make a post request to create a corechip
-    auth_client.force_login(user)
-    response = auth_client.post(reverse('corechips', kwargs={'pk': well.pk}), data=corechip_data_copy)
+    response = auth_client.post(reverse('corechips', kwargs={'pk': well.pk}), data=data)
 
-    # We need to first do a get request to get the form
-    # Then we can post the data to the form
-
-    # query_params = {
-    #     'pk' : well.pk,
-    # }
-
-    # request_url = reverse('corechips', 
-    #                       kwargs=query_params)
-
-
-    # # request_url += '?' + '&'.join([f'{key}={value}' for key, value in query_params.items()])
-
-    # data = corechip_data
-
-    # auth_client.force_login(user)
-    # response = auth_client.post(request_url, data=data)
-
-    assert response.status_code == 200
-
-
-    # # Alter the corechip data to make it invalid
-    # corechip_data_copy['corechip_name'] = None
-    # corechip_data_copy['core_id'] = None
-    # invalid = _validate(corechip_view, corechip_data_copy, model_name='CoreChip')
-    # assert invalid.errors() is not None
+    assert response.status_code == 302
+    assert CoreChip.objects.filter(corechip_name=data['corechip_name']).exists()
 
 def test_corechip_form_view_from_core_list():
     '''

@@ -1,5 +1,10 @@
 DEV NOTES
 
+STATUS:
+- Currently debugging some test code that is not working, Making sure that all the tests pass before moving on to the next feature
+Specially the coreFormView...
+
+
 URGENT:
 - [] Core catcher logic
 - [] What fields do we want to let the user edit?
@@ -82,6 +87,14 @@ or a secrets directory/
     - [ ] Indexes per sections
     - [ ] Index cores
     - [ ] Indexes per depth??
+
+
+- EPIC: Entering and Editing data
+    - AC: [x] User should be able to enter data
+    - AC: [ ] User should be able to edit some aspects of the data
+    - AC: [ ] The system should guard against duplicate entries
+    - AC: [ ] The system should facilitate data consistency for example of depths. What happens if a user can enter a depth that is already taken by another core?
+        
 
 - STORY: User management
     TASKS:
@@ -195,28 +208,32 @@ or a secrets directory/
         AC: [ ] Cores and core catchers should be related in terms of sequence
         AC: [ ] Users need to be able to enter data of cores and core catchers in parallel, therefore we cannot define automatically the core catcher number..
 
-- [ ] Solution para core catcher:
-    - AC: Select core that we want to create a core catcher for
-    - Prefill data from core section
-    - In core number the number available should be dynamic based on the last number of the core or core_catcher
-    - If a core_catcher preceeds a core_catcher, then the last count comes from the last core_catcher
+    - [ ] Solution para core catcher:
+        - AC: Select core that we want to create a core catcher for
+        - Prefill data from core section
+        - In core number the number available should be dynamic based on the last number of the core or core_catcher
+        - If a core_catcher preceeds a core_catcher, then the last count comes from the last core_catcher
 
 
-- [ ] Check that the core catcher is correctly modeled
-    It is not clear to me if the core catcher is really a type of core or not
-    Or if we chose to make it a core type for convenenience since they were very similar???
-    If they are two separate entities that are related then the core catcher should be a separate model
-    At the same time the relationship of count between core and core catcher should be modeled
-    Can a core have more than one core catcher? If no then this is very simple to solve...
+    - [ ] Check that the core catcher is correctly modeled
+        It is not clear to me if the core catcher is really a type of core or not
+        Or if we chose to make it a core type for convenenience since they were very similar???
+        If they are two separate entities that are related then the core catcher should be a separate model
+        At the same time the relationship of count between core and core catcher should be modeled
+        Can a core have more than one core catcher? If no then this is very simple to solve...
 
 
-    AC: Previous core section name should be presented when core_type is selected
-    AC: Should be created from the same create core form
-    AC: Should only be allowed to enter if there is a preceeding core that matches the core_section_number. 
+        AC: Previous core section name should be presented when core_type is selected
+        AC: Should be created from the same create core form
+        AC: Should only be allowed to enter if there is a preceeding core that matches the core_section_number. 
 
 - STORY: Edit core data so that user can add optional fields later or correct certain data
+    AC: Core name well, and all the things that identify a core should not be editable
     AC: User should be able to edit core data
     AC: User should be able to correct certain data???
+
+    Could have:
+    AC: Warn users if certain depth range is already taken by another core
 
 
 - STORY: Automatically post a core sample to ELAB journals to properly create stickers
@@ -225,10 +242,33 @@ or a secrets directory/
     AC: The sticker could be also presented in the page
     AC: If the post request is not succesfull then an error message should be shown in the page
 
-STORY: 
+- STORY: CoreChip
+    - TASKS:
+        - [x] Model
+        - [ ] Form
+        - [ ] template
+        - [ ] Validation
+        - [ ] View
+            - [ ] Validation
+         
+    - Ideas for the feature:
+        a. Solution: User selects a core and the form is generated based on the core name
+        b. User decides that wants to add a corechip
+        then he she can use certain parameters to filter the cores available to add the corechip
+        c. User is presented with a form completely empty just with the name of the well and they decide what to do. The name is generated automatically.
+        b. User can do c, but also generate a core chip from a core, and all the fields will automatically be filled with the data from the core
 
-STORY: Introduce subsamples data
-    cuttings
+    - AC: The name of the core chip that is automatically generated based on well_name, core_number, core_section_number, core_chip_number and from_top_bottom should be presented in the form, for example:
+        DELGT01-C1-2-CHB7
+
+
+
+- STORY: Introduce subsamples data
+    TASKS:
+        - [x] Create the model in models.py
+        - [x] Create the form with fields all
+
+        
 STORY: Edit core data
 STORY: Capture reference to core images
 

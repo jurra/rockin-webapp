@@ -45,7 +45,9 @@ def test_reject_empty_well():
 @pytest.mark.django_db
 def test_well_short_name(well):
     well.name = 'DEL-GT-01'
-    print('BUG, well.name is mutable')
+    well_alias = well.gen_short_name()
+    assert well_alias == 'DELGT01'
+    well.name = 'DEL GT 01'
     well_alias = well.gen_short_name()
     assert well_alias == 'DELGT01'
 

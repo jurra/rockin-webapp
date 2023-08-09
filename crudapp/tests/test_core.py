@@ -102,7 +102,6 @@ def test_well_cores_relationship(well, core_data):
 
 @pytest.mark.django_db
 def test_core_form_view_get_initial(well, request_factory):
-    print(f"This is the test well: {well.pk}")
     view = CoreFormView()
     
     # The request url should be this one:/wells/1/cores/create/?well_name=DAP&core_number=C1

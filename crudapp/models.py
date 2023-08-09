@@ -1,4 +1,5 @@
 import json
+import re
 
 from django.db import models
 from django.utils import timezone
@@ -43,7 +44,7 @@ class Well(models.Model):
         return self.name
     
     def gen_short_name(self):
-        short_name = self.name.split('-')
+        short_name = re.split(r'[-\s]+', self.name)
         return ''.join(short_name)
 
 
@@ -211,14 +212,8 @@ class Core(CoreBase):
         return json.dumps(serialized, indent=4, sort_keys=False)
 
 
-class CoreChip(RockinBase):
-    core_id = models.ForeignKey(
-        'Core',
-        on_delete=models.CASCADE,
-        help_text="The id of the core",
-        related_name='core_chips'
-    )
-    core_chip_number = models.IntegerField(
+class CoreChip(CoreBase):
+    corechip_number = models.IntegerField(
         help_text="The predefined name of the core chip")
     FROM_TOP_BOTTOM_CHOICES = [
         ('Top', 'Top'),
@@ -229,9 +224,9 @@ class CoreChip(RockinBase):
         choices=FROM_TOP_BOTTOM_CHOICES,
         help_text="Whether the core chip was taken from the top or the bottom of the core"
     )
-    core_chip_name = models.CharField(
+    corechip_name = models.CharField(
         max_length=255, help_text="The name of the core chip that is generated based on well_name, core_number, core_section_number, core_chip_number and from_top_bottom")
-    core_chip_depth = PositiveFloatField(
+    corechip_depth = PositiveFloatField(
         help_text="The depth of the core chip in meters")
     lithology = models.CharField(
         max_length=255, help_text="The lithology of the core chip")
@@ -241,6 +236,9 @@ class CoreChip(RockinBase):
         null=True, blank=True, help_text="Whether the core chip is a debris or not")
     formation = models.CharField(
         max_length=255, null=True, blank=True, help_text="The formation of the core chip")
+
+    top_depth = PositiveFloatField(
+        help_text="The top depth of the section of a meter sample")
 
 
 class Cuttings(RockinBase):

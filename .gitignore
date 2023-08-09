@@ -1,6 +1,8 @@
 # Ignore certificates
 letsencrypt/
 
+build/
+
 # ignore files _no_
 **/_no_**
 

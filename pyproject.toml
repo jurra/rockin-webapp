@@ -29,6 +29,7 @@ dev = [
     'pytest-cov',
     'pylint',
     'pytest-django',
+    'factory-boy',
 ]
 
 [tool.pytest.ini_options]
