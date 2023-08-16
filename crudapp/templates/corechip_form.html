@@ -2,14 +2,66 @@
 {% load static %}
 
 {% block content %}
-    <h2>Create Core Chip</h2>
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit">Create</button>
-    </form>
-    <script src="{% static 'js/main.js' %}"></script>
-    <script>
-      // Prepopulate the corechip
-    </script>
+<h2>Create Corechip</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button id="id_submit_btn" type="submit">Create</button>
+</form>
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+  // Define initial values server-side and create default empty values for the rest
+  const initialValues = {
+      id_well: '{{ form.initial.well_name }}',
+      id_core_number: '{{ form.initial.core_number }}',
+      id_core_section_number: '{{ form.initial.core_section_number }}',
+      id_core_section_name: '{{ form.initial.core_section_name }}',
+      id_collection_date: '{{ form.initial.collection_date }}',
+      id_corechip_name: '',
+      id_corechip_number: '',
+      id_from_top_bottom: '',
+      id_submit_btn: '' // We need to add this to the inititial values 
+                         // So that the factory also creates a DOM element for us to work with
+    };
+
+  // Capture field names
+  const fieldNames = Object.keys(initialValues);
+
+  function updateCorechipName(domElements) {
+    const wellName = domElements.id_well.value;
+    const coreNumber = domElements.id_core_number.value;
+    const coreSectionNumber = domElements.id_core_section_number.value;
+    const corechipNumber = domElements.id_corechip_number.value;
+
+    // a suffix to append to the corechip name that contains the corechip number,
+    // and whether it is a top or bottom corechip
+    coreChipSuffix = '';
+    if (domElements.id_from_top_bottom.value === 'Bottom') {
+      coreChipSuffix = 'CHB'+ corechipNumber;
+    } else if (domElements.id_from_top_bottom.value === 'Top') {
+      coreChipSuffix = 'CHT'+ corechipNumber; ;
+    }
+    domElements.id_core_section_name.value = joinNameComponents([wellName, coreNumber, coreSectionNumber]);
+    domElements.id_corechip_name.value = joinNameComponents([wellName, coreNumber, coreSectionNumber, coreChipSuffix]);
+
+  }
+
+  const DOMFields = createDOMElementsFactory(fieldNames);
+
+  // This is a hack to get the well name to be set to the initial value
+  //it should work without this, but it doesn't
+  DOMFields['id_well'].value = initialValues['id_well'];
+
+  // Define event listeners
+  DOMFields.id_core_number.addEventListener('input', () => updateCorechipName(DOMFields));
+  DOMFields.id_core_section_name.addEventListener('change', () => updateCorechipName(DOMFields));
+  DOMFields.id_well.addEventListener('change', () => updateCorechipName(DOMFields));
+
+  // Set form values from initial values
+  setFormValues(fieldNames, DOMFields, initialValues);
+  updateCorechipName(DOMFields);
+
+  // Listen to changes to update the core section name
+  setInterval(() => updateCorechipName(DOMFields), 500);
+</script>
 {% endblock %}

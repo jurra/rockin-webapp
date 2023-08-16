@@ -203,8 +203,16 @@ def test_corechip_post_request(auth_client, corechip_data, user, well, core):
     # add data in initial to data   
     data.update(initial)
 
+    post_request_url= reverse('corechips', kwargs={'pk': well.pk})
+
+    query_params = {
+        'well_name': data['well_name'],
+    }
+
+    post_request_url += '?' + '&'.join([f'{key}={value}' for key, value in query_params.items()])
+
     # Make a post request to create a corechip
-    response = auth_client.post(reverse('corechips', kwargs={'pk': well.pk}), data=data)
+    response = auth_client.post(post_request_url, data=data)
 
     assert response.status_code == 302
     assert CoreChip.objects.filter(corechip_name=data['corechip_name']).exists()

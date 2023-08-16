@@ -1,5 +1,5 @@
 from django.forms import ModelForm, ModelChoiceField, TextInput, inlineformset_factory
-from crudapp.models import Contact, Well, Core
+from crudapp.models import Contact, Well, Core, CoreChip
 
 
 class ContactForm(ModelForm):
@@ -54,8 +54,20 @@ class CoreForm(ModelForm):
 
 class CoreChipForm(ModelForm):
     class Meta:
-        model = Core
+        model = CoreChip
+
+        labels = {
+            'well': 'Well Name',
+            'core_number': 'Core Number',
+            'core_section_number': 'Core Section Number',
+        }
+
         fields = "__all__"
+
+        exclude = [
+            'registered_by',
+        ]
+
         widgets = {
             'core_section_name': TextInput(attrs={'readonly': 'readonly'}),
         }

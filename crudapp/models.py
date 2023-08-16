@@ -213,6 +213,9 @@ class Core(CoreBase):
 
 
 class CoreChip(CoreBase):
+    well = models.ForeignKey(Well, on_delete=models.CASCADE,
+                             help_text="The name of the well", related_name='corechips',
+                             to_field='name')
     corechip_number = models.IntegerField(
         help_text="The predefined name of the core chip")
     FROM_TOP_BOTTOM_CHOICES = [

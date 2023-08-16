@@ -1,4 +1,4 @@
-import pprint
+import pprint as pp
 
 from typing import Any, Dict
 from django.shortcuts import render
@@ -299,8 +299,13 @@ class CoreChipFormView(FormView):
         self.well_name = well_name
 
     def set_success_url(self):
-        self.success_url = reverse_lazy('well_core_list', kwargs={'pk': self.well.pk})
-    
+        if self.well is not None:
+            print('DEBUG')
+            pp.pprint(self.well)
+            self.success_url = reverse_lazy('well_core_list', kwargs={'pk': self.well.pk})
+        else:
+            raise Exception('Well is None')
+
     def set_well(self):
         try:
             self.well = Well.objects.get(name=self.well_name)
@@ -358,13 +363,21 @@ class CoreChipFormView(FormView):
                                                         'well_name': self.well_name,
                                                     }})
 
-    def post(self, request, *args, **kwargs):
-        # assert that well name is kwargs
-    
+    def post(self, request, *args, **kwargs):    
         post_data = request.POST.dict()
 
-        assert 'well_name' in post_data
-        self.set_well_name_from_url(well_name=post_data['well_name'])
+        # raise error if POST.dict doesnt have the well_name
+        # if 'well_name' not in post_data:
+        #     raise Exception('POST.dict does not have the well_name')
+
+        data = request.GET.dict()
+
+        # raise error if GET.dict doesn't have the well_name
+        well_name = data.get('well_name')
+        if well_name is None:
+            raise Exception('Query data does not have the well_name')
+
+        self.set_well_name_from_url(well_name=data['well_name'])
         self.set_well()
         self.set_success_url()
 
@@ -374,7 +387,7 @@ class CoreChipFormView(FormView):
             raise Exception('User is not authenticated')
     
         # Add the corechip name to the post data to make the post data valid
-        corechip_name = f"{post_data.get('well')}-{post_data.get('core_number')}-{post_data.get('core_section_number')}-{post_data.get('corechip_number')}-{post_data.get('from_top_bottom')}"
+        corechip_name = f"{data.get('well')}-{data.get('core_number')}-{data.get('core_section_number')}-{data.get('corechip_number')}-{post_data.get('from_top_bottom')}"
         # corechip_name = f{initial['well']}
         post_data['corechip_name'] = corechip_name
 
@@ -384,7 +397,7 @@ class CoreChipFormView(FormView):
                 'corechip_name', f'A corechip with name {corechip_name} already exists. Please try again with a number bigger than {post_data.get("corechip_number") }.')
             return self.form_invalid(form)
 
-        checked_corechip = _validate(self, post_data=post_data, model_name='CoreChip')
+        checked_corechip = _validate(self, post_data=data, model_name='CoreChip')
 
         if checked_corechip is not None:
             if checked_corechip is ValidationError:
@@ -404,101 +417,5 @@ class CoreChipFormView(FormView):
             return super().form_valid(instance)
         else:
             print(form.errors)
-            return self.form_invalid(form)
-
-    # def set_well_name_from_url(self):
-    #     # This helps us to get the well name from the url, the well is passed as an id
-    #     # in the form of a query parameter /well/<pk>/corechips/
-    #     self.well_name = self.request.GET.get('well_name')
-
-    # def set_success_url(self,):
-    #     self.success_url = reverse_lazy('well_core_list', kwargs={'pk': self.well.pk})
-    
-    # def set_well(self):
-    #     try:
-    #         self.well = Well.objects.get(name=self.well_name)
-    #     except Well.DoesNotExist:
-    #         self.well = None
-
-    # def set_core_section_number(self):
-    #     self.core_number = self.request.GET.get('core_number')
-
-    #     # Based on the core number we get from the url, we propose the next core section number
-    #     # We also if the core_section_number is not provided, we propose 1 or the next number
-    #     if self.core_number:
-    #         # With this query we get the last count of the core_section_number for the current core number
-    #         latest_core_section_number = Core.objects.filter(core_number=self.core_number).aggregate(
-    #             Max('core_section_number'))['core_section_number__max']
-    #         if latest_core_section_number is not None:
-    #             return latest_core_section_number + 1
-    #         else:
-    #             return 1
-
-    # def get_initial(self):
-    #     ''' With this function we can pre-populate the form with initial values 
-    #     some of the values are based on the url parameters like for example the well name
-    #     '''
-    #     initial = super().get_initial()
-
-    #     # Define all the initial values of the form object
-    #     self.set_well_name_from_url()
-    #     self.set_well() 
-    #     assert self.well is not None
-    #     assert self.well_name is not None
-    #     self.set_success_url()
-
-    #     # Propose the user collection date as the current date and time
-    #     initial['collection_date'] = timezone.now()
-        
-    #     # Get the well to generate the success url
-    #     well_name = self.well_name
-    #     well = Well.objects.get(name=well_name)
-    #     self.success_url = reverse_lazy('well_core_list', kwargs={'pk': well.pk})
-
-    #     initial['well'] = well_name
-    #     well_short_name = well.gen_short_name()
-
-    #     core_section_name = self.request.GET.get('core_section_name')
-
-    #     initial['well_short_name'] = well_short_name
-    #     initial['core_section_name'] = core_section_name
-    #     return initial
-
-    # def post(self, request, *args, **kwargs):
-    #     post_data = request.POST.dict()
-
-    #     if request.user.is_authenticated:
-    #         current_user = request.user
-    #     else:
-    #         raise Exception('User is not authenticated')
-        
-    #     # corechip_name = f"{initial['well_short_name']}-{post_data.get('core_number')}-{post_data.get('core_section_number')}-{post_data.get('corechip_number')}-{post_data.get('from_top_bottom')}"
-        
-    #     # if corechip name is not in the post data, we add it, this could be possible wen directly posting
-    #     # for example in tests
-    #     # if 'corechip_name' not in post_data:
-    #     #     post_data['corechip_name'] = corechip_name
-
-    #     checked_corechip = _validate(self, post_data=post_data, model_name='CoreChip')
-
-    #     if checked_corechip is not None:
-    #         if checked_corechip is ValidationError:
-    #             form = self.get_form()
-    #             for error in checked_corechip.errors():
-    #                 field = error['loc'][0]
-    #                 message = error['msg']
-    #                 form.add_error(field, message)
-
-    #             return self.form_invalid(form)
-
-    #     form = self.get_form()
-    #     if form.is_valid():
-    #         instance = form.save(commit=False)
-    #         instance.registered_by = current_user
-    #         instance.save()
-    #         return super().form_valid(instance)
-    #     else:
-    #         print(form.errors)
-    #         return self.form_invalid(form)
-        
+            return self.form_invalid(form)        
 
