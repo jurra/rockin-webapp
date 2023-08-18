@@ -3,7 +3,6 @@ from pprint import pprint
 
 import pytest
 from pydantic import ValidationError
-from django.test import RequestFactory
 
 from crudapp.models import CoreChip
 from crudapp.views import _validate , CoreChipFormView
@@ -11,6 +10,8 @@ from datamodel import CoreChip as CorechipModel
 
 from django.urls import reverse
 from django.test import Client
+from django.test import RequestFactory
+from django.db import IntegrityError
 
 @pytest.fixture
 def corechip_post_request(user, well):
@@ -18,7 +19,7 @@ def corechip_post_request(user, well):
     client.force_login(user)
 
     # Data for the corechip post request
-    corechip_data = {
+    corechip_json = {
         'core_id': 1,
         'core_chip_number': 1,
         'from_top_bottom': 'Top',
@@ -33,19 +34,34 @@ def corechip_post_request(user, well):
     # Make a post request to create a corechip
     well_id = well.id
     url = reverse('well_core_list', args=[well_id])  # Replace 'corechip_create' with the actual URL name of the view for corechip creation
-    response = client.post(url, data=corechip_data)
+    response = client.post(url, data=corechip_json)
 
     return response
 
 # TEST MODEL
 @pytest.mark.django_db
-def test_create_corechip(corechip_data):
+def test_create_corechip(corechip_json, user, well):
     # Check that the corechip was createed
-    print(corechip_data)
     assert CoreChip.objects.count() == 1
 
     retrieved_corechip = CoreChip.objects.first()
-    assert retrieved_corechip.corechip_name == corechip_data['corechip_name']
+    assert retrieved_corechip.corechip_name == corechip_json['corechip_name']
+
+    # deepcopy the corechip_json
+    duplicate_corechip = copy.deepcopy(corechip_json)
+
+    # Replace those fields that require actual objects
+    duplicate_corechip['well'] = well
+    duplicate_corechip['registered_by'] = user
+
+    # drop well_name and core_type 
+    duplicate_corechip.pop('well_name')
+    duplicate_corechip.pop('core_type')
+
+    with pytest.raises(IntegrityError):
+        # Recreate a corechip instance by copypasting corechip
+        # This should raise an error because corechip_name is unique
+        CoreChip.objects.create(**duplicate_corechip)
 
 def test_update_corechip():
     ''' Here we have new optional data to be added
@@ -60,7 +76,7 @@ def test_delete_corechip():
 
 # TEST VALIDATION
 @pytest.mark.django_db
-def test_validate_corechip(corechip_data, corechip_post_request):
+def test_validate_corechip(corechip_json, corechip_post_request):
     ''' 
     input: a post request with a corechip
     process: pydantic model vaidates the corechip
@@ -69,20 +85,17 @@ def test_validate_corechip(corechip_data, corechip_post_request):
     assert CorechipModel is not None
 
     corechip_view = CoreChipFormView()
-    _validate(corechip_view, corechip_data, model_name='CoreChip')
+    _validate(corechip_view, corechip_json, model_name='CoreChip')
     # TODO: _validate(corechip_view, corechip_post_request, model_name='CoreChip')
      
         
     # Make a copy of corechip data  
-    corechip_data_copy = copy.deepcopy(corechip_data)
+    corechip_json_copy = copy.deepcopy(corechip_json)
     
     # Alter the corechip data to make it invalid
-    corechip_data_copy['corechip_name'] = ''
-    invalid = _validate(corechip_view, corechip_data_copy, model_name='CoreChip')
+    corechip_json_copy['corechip_name'] = ''
+    invalid = _validate(corechip_view, corechip_json_copy, model_name='CoreChip')
     assert invalid.errors() is not None
-
-def test_reject_duplicate_corechip():
-    pass
 
 
 # TEST VIEWS
@@ -170,13 +183,8 @@ def test_corechip_get(well, core, auth_client, user):
     assert initial['core_section_name'] == core.core_section_name
     assert initial['core_number'] == core.core_number
 
-    debug = response.context['DEBUG']
-    assert debug is not None
-    assert debug['well_name'] is not None
-    print(debug)
-
 @pytest.mark.django_db
-def test_corechip_post_request(auth_client, corechip_data, user, well, core):
+def test_corechip_post_request(auth_client, corechip_json, user, well, core):
     ''' 
     input: a post request with a corechip
     process: pydantic model vaidates the corechip
@@ -195,7 +203,7 @@ def test_corechip_post_request(auth_client, corechip_data, user, well, core):
 
     initial = response.context['form'].initial
 
-    data = copy.deepcopy(corechip_data)
+    data = copy.deepcopy(corechip_json)
 
     corechip_view = CoreChipFormView()
     valid = _validate(corechip_view, data, model_name='CoreChip')

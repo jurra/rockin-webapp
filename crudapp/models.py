@@ -101,7 +101,9 @@ class CoreBase(RockinBase):
         validators=[MinValueValidator(1)],
         help_text="The counter for all 1 meter sections of the core")
     core_section_name = models.CharField(
-        max_length=255, help_text="The name of the section based on the well name, the core number and the core section number. See that CC has a sequential relationship with the core number and core section number")
+        max_length=255, 
+        unique=True,
+        help_text="The name of the section based on the well name, the core number and the core section number. See that CC has a sequential relationship with the core number and core section number")
 
     class Meta:
         abstract = True
@@ -228,7 +230,9 @@ class CoreChip(CoreBase):
         help_text="Whether the core chip was taken from the top or the bottom of the core"
     )
     corechip_name = models.CharField(
-        max_length=255, help_text="The name of the core chip that is generated based on well_name, core_number, core_section_number, core_chip_number and from_top_bottom")
+        max_length=255, 
+        unique=True,
+        help_text="The name of the core chip that is generated based on well_name, core_number, core_section_number, core_chip_number and from_top_bottom")
     corechip_depth = PositiveFloatField(
         help_text="The depth of the core chip in meters")
     lithology = models.CharField(
@@ -251,7 +255,9 @@ class Cuttings(RockinBase):
     cuttings_number = models.IntegerField(
         help_text="The predefined name of the cuttings")
     cuttings_name = models.CharField(
-        max_length=255, help_text="The name of the cuttings")
+        max_length=255, 
+        unique=True,
+        help_text="The name of the cuttings")
     cuttings_depth = PositiveFloatField(
         help_text="The depth of the cuttings in meters")
     sample_state = models.CharField(max_length=100, choices=[('Wet washed', 'Wet washed'), (
@@ -283,6 +289,7 @@ class MicroCore(RockinBase):
     micro_core_number = models.IntegerField(
         help_text="The predefined name of the micro core")
     micro_core_name = models.CharField(
+        unique=True,
         max_length=255, help_text="The name of the micro core that is generated based on well_name")
 
     # Optional fields

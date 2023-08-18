@@ -102,7 +102,3 @@ def test_well_form_view():
     response = view(request)
     assert response.status_code == 200
     assert not response.context_data['form'].is_valid()
-
-@pytest.mark.django_db
-def test_well_form_view_reject_duplicate():
-    assert 1 == 2

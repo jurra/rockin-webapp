@@ -300,8 +300,6 @@ class CoreChipFormView(FormView):
 
     def set_success_url(self):
         if self.well is not None:
-            print('DEBUG')
-            pp.pprint(self.well)
             self.success_url = reverse_lazy('well_core_list', kwargs={'pk': self.well.pk})
         else:
             raise Exception('Well is None')
@@ -345,6 +343,7 @@ class CoreChipFormView(FormView):
     def get(self, request, *args, **kwargs):
         # Extract initial data from GET request parameters
         data = {
+            'well': request.GET.get('well_name'),
             'well_pk': request.GET.get('well_pk'),
             'well_name': request.GET.get('well_name'),
             'core_number': request.GET.get('core_number'),
@@ -358,17 +357,10 @@ class CoreChipFormView(FormView):
         self.set_well_name_from_url(data['well_name'])
 
         # Set success url based on well pk
-        return render(request, self.template_name, {'form': form, **data, 
-                                                    'DEBUG': {
-                                                        'well_name': self.well_name,
-                                                    }})
+        return render(request, self.template_name, {'form': form, **data})
 
     def post(self, request, *args, **kwargs):    
         post_data = request.POST.dict()
-
-        # raise error if POST.dict doesnt have the well_name
-        # if 'well_name' not in post_data:
-        #     raise Exception('POST.dict does not have the well_name')
 
         data = request.GET.dict()
 

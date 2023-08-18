@@ -77,28 +77,11 @@ def core(well, user):
     )
 
 @pytest.fixture
-def corechip_data(well, user, core):
-    '''
-    well
-    str type expected (type=type_error.str)
-    x registered_by
-    field required (type=value_error.missing)
-    core_number
-    field required (type=value_error.missing)
-    planned_core_number
-    field required (type=value_error.missing)
-    core_section_number
-    field required (type=value_error.missing)
-    core_section_name
-    field required (type=value_error.missing)
-    core_id
-    field required (type=value_error.missing)
-    '''
-
+def corechip(well, user, core):
     # Shorten the name as it is required for the corechip name
     well_name_short = well.gen_short_name()
 
-    corechip = CoreChip.objects.create(
+    return CoreChip.objects.create(
         well=well,
         registration_date = '2021-06-22 13:00:00',
         collection_date='2021-06-22 12:00:00',
@@ -117,6 +100,9 @@ def corechip_data(well, user, core):
         formation='Sample Formation',
         top_depth=100.0,  # Replace with the desired top_depth
     )
+
+@pytest.fixture
+def corechip_json(corechip, well):
     return  {
         # This is post data from the frontend
         'well': well.name,

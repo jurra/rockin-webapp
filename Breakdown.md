@@ -26,6 +26,9 @@ URGENT:
     - When we create a core it should already be related to a well, then the form for creating a core should be a subform of the well form
 
 
+GENERAL AC:
+- [] Avoid duplicates of names
+
 - TASKS:
     - [] Server setup
         - [] Nginx
@@ -68,8 +71,6 @@ or a secrets directory/
         - Use mysql workbench or postgresql pgadmin locally and ssh via, ssh with a portforward...
         - We could also add access right...
 
-
-        
         Check if CI/CD works
         Then check if the whole setup of nginx works
         then combine.
@@ -245,20 +246,24 @@ or a secrets directory/
 - STORY: CoreChip
     - TASKS:
         - [x] Model
-        - [ ] Form
-        - [ ] template
-        - [ ] Validation
-        - [ ] View
-            - [ ] Validation
-         
+        - [x] Form
+        - [x] template
+        - [x] Validation
+        - [x] View
+            - [x] Validation
+        - [ ] Access via navigation
+        - [x] Test coverage
+
+
     - Ideas for the feature:
         a. Solution: User selects a core and the form is generated based on the core name
         b. User decides that wants to add a corechip
         then he she can use certain parameters to filter the cores available to add the corechip
         c. User is presented with a form completely empty just with the name of the well and they decide what to do. The name is generated automatically.
         b. User can do c, but also generate a core chip from a core, and all the fields will automatically be filled with the data from the core
-
-    - AC: The name of the core chip that is automatically generated based on well_name, core_number, core_section_number, core_chip_number and from_top_bottom should be presented in the form, for example:
+    
+    - x AC: Avoid duplicates
+    - x AC: The name of the core chip that is automatically generated based on well_name, core_number, core_section_number, core_chip_number and from_top_bottom should be presented in the form, for example:
         DELGT01-C1-2-CHB7
 
 
