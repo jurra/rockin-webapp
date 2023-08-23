@@ -11,7 +11,7 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 
 from .models import Contact, Well, Core, CoreChip
-from .forms import ContactForm, WellForm, CoreForm, CoreChipForm
+from .forms import ContactForm, WellForm, CoreForm, CoreChipForm, MicroCoreForm
 
 from pydantic import ValidationError
 
@@ -61,7 +61,7 @@ def delete(request, pk, template_name='confirm_delete.html'):
     return render(request, template_name, {'object': contact})
 
 
-def _validate(view, post_data, **kwargs):
+def _validate(payload, **kwargs):
     ''' How it works:
     - Get the name of the model that we're working with, Such model has a class
     in pydantic, for example Well and also on Django ORM with the same name
@@ -79,7 +79,7 @@ def _validate(view, post_data, **kwargs):
         validated_data ( )
 
     Example:
-    >>> _validate(view=self, request=request, post_data=post_data, model_name='Well')
+    >>> _validate(view=self, request=request, payload=post_data, model_name='Well')
     '''
     model_name = kwargs.get('model_name')
 
@@ -89,7 +89,7 @@ def _validate(view, post_data, **kwargs):
 
         # Create a new instance of the specified model using the provided data
         # This will raise a ValidationError if the data is invalid
-        validated_data = model(**post_data)
+        validated_data = model(**payload)
     except ValidationError as e:
         return e
     return validated_data
@@ -131,7 +131,7 @@ class WellFormView(FormView):
         if 'id' not in post_data:
             post_data['id'] = 1
 
-        checked_well = _validate(self, post_data=post_data, model_name='Well')
+        checked_well = _validate(payload=post_data, model_name='Well')
 
         if checked_well is not None:
             if type(checked_well) is ValidationError:
@@ -260,7 +260,7 @@ class CoreFormView(FormView):
                 'core_section_name', f'A core with name {core_section_name} already exists. Please try again with a number bigger than {post_data.get("core_section_number") }.')
             return self.form_invalid(form)
         
-        checked_core = _validate(self, post_data=post_data, model_name='Core')
+        checked_core = _validate(payload=post_data, model_name='Core')
 
         if checked_core is not None:
             if checked_core is ValidationError:
@@ -283,9 +283,6 @@ class CoreFormView(FormView):
             return self.form_invalid(form)
 
 class CoreChipFormView(FormView):
-    '''AC: A new core form is presented to the user when makes a post request
-    to this url: well/<pk>/corechips/create'''
-
     template_name = 'corechip_form.html'
     form_class = CoreChipForm
     success_url = reverse_lazy('well_core_list')
@@ -389,7 +386,7 @@ class CoreChipFormView(FormView):
                 'corechip_name', f'A corechip with name {corechip_name} already exists. Please try again with a number bigger than {post_data.get("corechip_number") }.')
             return self.form_invalid(form)
 
-        checked_corechip = _validate(self, post_data=data, model_name='CoreChip')
+        checked_corechip = _validate(payload=data, model_name='CoreChip')
 
         if checked_corechip is not None:
             if checked_corechip is ValidationError:
@@ -410,4 +407,8 @@ class CoreChipFormView(FormView):
         else:
             print(form.errors)
             return self.form_invalid(form)        
+
+class MicroCoreFormView(FormView):
+    template_name = 'microcore_form.html'
+    form_class = MicroCoreForm
 

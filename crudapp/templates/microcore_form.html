@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h2>Create Microcore</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button id="id_submit_btn" type="submit">Create</button>
+</form>
+<script>
+    // Define initial values server-side and create default empty values for the rest
+
+</script>
+{% endblock %}

@@ -1,5 +1,5 @@
 from django.forms import ModelForm, ModelChoiceField, TextInput, inlineformset_factory
-from crudapp.models import Contact, Well, Core, CoreChip
+from crudapp.models import Contact, Well, Core, CoreChip, MicroCore
 
 
 class ContactForm(ModelForm):
@@ -71,3 +71,10 @@ class CoreChipForm(ModelForm):
         widgets = {
             'core_section_name': TextInput(attrs={'readonly': 'readonly'}),
         }
+
+class MicroCoreForm(ModelForm):
+    class Meta:
+        model = MicroCore
+        fields = "__all__"
+
+        

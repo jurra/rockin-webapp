@@ -6,11 +6,22 @@ from django.contrib.auth.models import User
 
 from crudapp.models import Well, Core, CoreChip
 
+
+@pytest.fixture
+def generic_data():
+    return {"date_time": '2021-06-22 13:00:00',
+            "remarks": "Test Remarks",
+            "lithology": "Test Lithology",
+            }
+
+
 @pytest.fixture
 def session_key():
     return '_auth_user_id'
 
 # Create a user object
+
+
 @pytest.fixture
 def user():
     return User.objects.create_user(
@@ -19,6 +30,7 @@ def user():
         password="testpassword"
     )
 
+
 @pytest.fixture
 def auth_client(user):
     # The client needs to be logged in to access the views
@@ -26,9 +38,18 @@ def auth_client(user):
     client.login(username=user.username, password=user.password)
     return client
 
+
+@pytest.fixture
+def non_auth_client():
+    # The client needs to be logged in to access the views
+    client = Client()
+    return client
+
+
 @pytest.fixture
 def request_factory():
     return RequestFactory()
+
 
 @pytest.fixture
 def well():
@@ -50,15 +71,17 @@ def core_data(well, user):
         "drilling_mud": "Water-based mud",
         "lithology": "Test Lithology",
         "core_number": "C1",
-        "core_section_number": 1, # Should be a counter
+        "core_section_number": 1,  # Should be a counter
         "top_depth": 100.00,
         "planned_core_number": "C1",
         "core_section_name": "Test Well-C1-1"
     }
 
+
 @pytest.fixture
 def invalid_date_time(well, core_data):
     core_data["registration_date"] = '2021-06-22'
+
 
 @pytest.fixture
 def core(well, user):
@@ -71,10 +94,11 @@ def core(well, user):
         drilling_mud="Water-based mud",
         lithology="Test Lithology",
         core_number="C1",
-        core_section_number=1, # Should be a counter
+        core_section_number=1,  # Should be a counter
         top_depth=100.00,
         planned_core_number="C1",
     )
+
 
 @pytest.fixture
 def corechip(well, user, core):
@@ -83,7 +107,7 @@ def corechip(well, user, core):
 
     return CoreChip.objects.create(
         well=well,
-        registration_date = '2021-06-22 13:00:00',
+        registration_date='2021-06-22 13:00:00',
         collection_date='2021-06-22 12:00:00',
         core_number=core.core_number,
         core_section_number=core.core_section_number,
@@ -92,7 +116,7 @@ def corechip(well, user, core):
         drilling_mud='Water-based mud',
         registered_by=user,
         from_top_bottom='Top',  # Replace with the desired from_top_bottom choice
-        corechip_name=well_name_short + '-C1-2-CHB7',  
+        corechip_name=well_name_short + '-C1-2-CHB7',
         corechip_depth=10.0,  # Replace with the desired core_chip_depth
         lithology='Sample Lithology',
         remarks='Sample Remarks',
@@ -101,9 +125,10 @@ def corechip(well, user, core):
         top_depth=100.0,  # Replace with the desired top_depth
     )
 
+
 @pytest.fixture
 def corechip_json(corechip, well):
-    return  {
+    return {
         # This is post data from the frontend
         'well': well.name,
         'well_name': well.name,
