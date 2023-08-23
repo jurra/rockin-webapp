@@ -28,6 +28,8 @@ class IndexView(ListView):
         return Contact.objects.all()
 
 # CONTACT VIEW
+
+
 class ContactDetailView(DetailView):
     model = Contact
     template_name = 'contact-detail.html'
@@ -94,6 +96,7 @@ def _validate(payload, **kwargs):
         return e
     return validated_data
 
+
 class HomeView(ListView):
     template_name = 'index.html'
     context_object_name = 'well_list'
@@ -106,6 +109,7 @@ class HomeView(ListView):
         except Well.DoesNotExist:
             return render(request, self.template_name, {'wells': None})
 
+
 class WellListView(ListView):
     template_name = 'well_list.html'
     context_object_name = 'well_list'
@@ -117,6 +121,7 @@ class WellListView(ListView):
             return render(request, self.template_name, {'wells': wells})
         except Well.DoesNotExist:
             return render(request, self.template_name, {'wells': None})
+
 
 class WellFormView(FormView):
     template_name = 'well.html'
@@ -157,6 +162,7 @@ class WellFormView(FormView):
             print(form.errors)
             return self.form_invalid(form)
 
+
 class WellCoreListView(ListView):
     ''' This view is used to list all the cores that belong to a well
     '''
@@ -176,6 +182,7 @@ class WellCoreListView(ListView):
         except Well.DoesNotExist:
             return render(request, self.template_name, {'well': None, 'cores': None})
 
+
 class CoreFormView(FormView):
     '''This view is used to create a new core
     AC: A new core form is presented to the user when makes a post request
@@ -194,8 +201,9 @@ class CoreFormView(FormView):
         self.well_name = self.request.GET.get('well_name')
 
     def set_success_url(self,):
-        self.success_url = reverse_lazy('well_core_list', kwargs={'pk': self.well.pk})
-    
+        self.success_url = reverse_lazy(
+            'well_core_list', kwargs={'pk': self.well.pk})
+
     def set_well(self):
         try:
             self.well = Well.objects.get(name=self.well_name)
@@ -215,7 +223,7 @@ class CoreFormView(FormView):
                 return latest_core_section_number + 1
             else:
                 return 1
-    
+
     def get_initial(self):
         ''' With this function we pre-populate the form with initial values to avoid that users
         having to type the same values over and over again 
@@ -251,7 +259,7 @@ class CoreFormView(FormView):
             raise Exception('User is not authenticated')
 
         # Add the core section name to the post data to make the post data valid
-        core_section_name = f"{post_data.get('well')}-{post_data.get('core_number')}-{post_data.get('core_section_number')}"        
+        core_section_name = f"{post_data.get('well')}-{post_data.get('core_number')}-{post_data.get('core_section_number')}"
         post_data['core_section_name'] = core_section_name
 
         if Core.objects.filter(core_section_name=core_section_name).exists():
@@ -259,7 +267,7 @@ class CoreFormView(FormView):
             form.add_error(
                 'core_section_name', f'A core with name {core_section_name} already exists. Please try again with a number bigger than {post_data.get("core_section_number") }.')
             return self.form_invalid(form)
-        
+
         checked_core = _validate(payload=post_data, model_name='Core')
 
         if checked_core is not None:
@@ -282,6 +290,7 @@ class CoreFormView(FormView):
             print(form.errors)
             return self.form_invalid(form)
 
+
 class CoreChipFormView(FormView):
     template_name = 'corechip_form.html'
     form_class = CoreChipForm
@@ -297,7 +306,8 @@ class CoreChipFormView(FormView):
 
     def set_success_url(self):
         if self.well is not None:
-            self.success_url = reverse_lazy('well_core_list', kwargs={'pk': self.well.pk})
+            self.success_url = reverse_lazy(
+                'well_core_list', kwargs={'pk': self.well.pk})
         else:
             raise Exception('Well is None')
 
@@ -320,7 +330,7 @@ class CoreChipFormView(FormView):
                 return latest_core_section_number + 1
             else:
                 return 1
-    
+
     def get_initial(self):
         ''' With this function we pre-populate the form with initial values to avoid that users
         having to type the same values over and over again 
@@ -336,7 +346,7 @@ class CoreChipFormView(FormView):
         initial['core_number'] = core_number
         initial['core_section_number'] = self.set_core_section_number()
         return initial
-    
+
     def get(self, request, *args, **kwargs):
         # Extract initial data from GET request parameters
         data = {
@@ -356,7 +366,7 @@ class CoreChipFormView(FormView):
         # Set success url based on well pk
         return render(request, self.template_name, {'form': form, **data})
 
-    def post(self, request, *args, **kwargs):    
+    def post(self, request, *args, **kwargs):
         post_data = request.POST.dict()
 
         data = request.GET.dict()
@@ -374,7 +384,7 @@ class CoreChipFormView(FormView):
             current_user = request.user
         else:
             raise Exception('User is not authenticated')
-    
+
         # Add the corechip name to the post data to make the post data valid
         corechip_name = f"{data.get('well')}-{data.get('core_number')}-{data.get('core_section_number')}-{data.get('corechip_number')}-{post_data.get('from_top_bottom')}"
         # corechip_name = f{initial['well']}
@@ -406,9 +416,9 @@ class CoreChipFormView(FormView):
             return super().form_valid(instance)
         else:
             print(form.errors)
-            return self.form_invalid(form)        
+            return self.form_invalid(form)
+
 
 class MicroCoreFormView(FormView):
     template_name = 'microcore_form.html'
     form_class = MicroCoreForm
-
