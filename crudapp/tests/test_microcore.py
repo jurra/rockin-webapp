@@ -40,6 +40,15 @@ def microcore_json(microcore_object):
     serialized = model_to_dict(microcore_object)
     return serialized
 
+@pytest.fixture
+def invalid_microcore_json(microcore_json):
+    invalid = copy.deepcopy(microcore_json)
+    invalid['drilling_mud'] = 'Test Mud'
+    invalid['registered_by'] = ''
+    invalid['well'] = 'invalid_key'
+
+    return invalid
+
 
 @pytest.mark.django_db
 def test_microcore_data(microcore_json):
@@ -113,13 +122,52 @@ def test_microcore_get_form(auth_client, user, well):
     assert response.status_code == 200
 
 @pytest.mark.django_db
-def test_microcore_post_form():
-    '''    
+def test_microcore_post_form(auth_client, user, well, microcore_json, invalid_microcore_json):
+    '''
+    AC: Authenticated user is required
+    AC: url query must have the well pk    
     AC: Submission redirects to the well core list
     AC: Invalid submission redirects to the same page and shows errors per field
     AC: Invalid submission also returns a message that the submission is invalid
     AC: Form needs to be validated with pyndantic before saving
     AC: The well name should be shortened
     '''
+    # Just a rename for convenience
+    valid_payload = microcore_json
+    invalid_payload = invalid_microcore_json
+
     microcore_view = MicroCoreFormView()
     assert microcore_view is not None
+
+    # Check that the url link is setup correctly
+    # create a post request
+    post_data = microcore_json
+    
+    post_url = reverse("microcores", kwargs={'pk': well.pk})
+    
+    # raises an error if user is not authenticated
+    with pytest.raises(Exception):
+        response = auth_client.post(post_url, post_data)
+        assert response.status_code == 302
+        assert response.url == "/accounts/login/"
+    
+    auth_client.force_login(user)
+
+    # If form is invalid it should return the same page with errors
+    response = auth_client.post(post_url, invalid_payload)
+    assert response.status_code == 200
+    assert response.context['form'].errors is not None
+
+    # check for valid submission
+    response = auth_client.post(post_url, valid_payload)
+    assert response.context['form'].errors is None
+    assert response.status_code == 302
+    assert response.url == f"/wells/{well.pk}/microcores/"
+
+
+
+
+
+
+
+

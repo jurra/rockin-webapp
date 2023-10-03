@@ -415,10 +415,42 @@ class CoreChipFormView(FormView):
             instance.save()
             return super().form_valid(instance)
         else:
-            print(form.errors)
             return self.form_invalid(form)
 
 
 class MicroCoreFormView(FormView):
     template_name = 'microcore_form.html'
     form_class = MicroCoreForm
+
+    def post(self, request, *args, **kwargs):
+        data = request.GET.dict()
+
+        if request.user.is_authenticated:
+            current_user = request.user
+        else:
+            raise Exception('User is not authenticated')
+
+        checked_microcore = _validate(payload=data, model_name='MicroCore')
+
+        if checked_microcore is not None:
+            if checked_microcore is ValidationError:
+                form = self.get_form()
+                for error in checked_microcore.errors():
+                    field = error['loc'][0]
+                    message = error['msg']
+                    form.add_error(field, message)
+
+                return self.form_invalid(form)
+        
+        form = self.get_form()
+        
+        if form.is_valid():
+            instance = form.save(commit=False)
+            instance.registered_by = current_user
+            instance.save()
+            return super().form_valid(instance)
+        else:
+            return self.form_invalid(form)
+
+
+
