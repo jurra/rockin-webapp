@@ -1,0 +1,82 @@
+name: SSH Tunnel Debug Workflow
+
+on:
+  push:
+    branches:
+      - main
+      - feature/github-actions
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    # Masking sensitive values in logs
+    - name: Mask Secrets
+      run: |
+        echo "SERVER_DOMAIN=${{ secrets.SERVER_DOMAIN }}" >> $GITHUB_ENV
+        echo "PROXY_HOST=${{ secrets.PROXY_HOST }}" >> $GITHUB_ENV
+        echo "SERVER_USERNAME=${{ secrets.SERVER_USERNAME }}" >> $GITHUB_ENV
+        echo "PROXY_USERNAME=${{ secrets.PROXY_USERNAME }}" >> $GITHUB_ENV
+        echo "::add-mask::${{ secrets.SSH_PRIVATE_KEY }}"
+        echo "::add-mask::${{ secrets.SERVER_DOMAIN }}"
+        echo "::add-mask::${{ secrets.PROXY_HOST }}"
+        echo "::add-mask::${{ secrets.SERVER_USERNAME }}"
+        echo "::add-mask::${{ secrets.PROXY_USERNAME }}"
+      
+    # Ensuring SSH client availability for subsequent steps
+    - name: Install SSH Client
+      run: sudo apt-get install -y ssh-client
+      
+    # Verify DNS resolution to diagnose any DNS issues
+    - name: Debug DNS Resolution
+      
+      # Verifies that the GitHub Actions runner can resolve DNS for both the proxy and target servers
+      run: |
+        echo "Resolving DNS for: $SERVER_DOMAIN"
+        nslookup $SERVER_DOMAIN
+        echo "Resolving DNS for Proxy: $PROXY_HOST"
+        nslookup $PROXY_HOST
+    
+    # Attempting a direct SSH connection to the proxy for debugging purposes
+    - name: Debug Direct SSH to Proxy
+      # A direct SSH command to the proxy host with verbose logging enabled, to debug connection issues directly to the proxy.  
+      run: |  
+        echo "Direct SSH to Proxy for Debugging"
+        ssh -vvv -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i <(echo "${{ secrets.SSH_PRIVATE_KEY }}") $PROXY_USERNAME@$PROXY_HOST "echo 'Connected to Proxy'"
+    
+    # Setup SSH configuration for proxy jumping
+    - name: Setup SSH Config
+      # Creates an SSH configuration file to define how to connect to the target server via the proxy (jump) host.
+      run: |
+        echo "Host target" > $HOME/.ssh/config
+        echo "  HostName $SERVER_DOMAIN" >> $HOME/.ssh/config
+        echo "  User $SERVER_USERNAME" >> $HOME/.ssh/config
+        echo "  Port 22" >> $HOME/.ssh/config
+        echo "  IdentityFile $HOME/.ssh/deploy_key" >> $HOME/.ssh/config
+        echo "  ProxyJump proxy" >> $HOME/.ssh/config
+        echo "  StrictHostKeyChecking no" >> $HOME/.ssh/config
+        echo "  UserKnownHostsFile=/dev/null" >> $HOME/.ssh/config
+        echo "Host proxy" >> $HOME/.ssh/config
+        echo "  HostName $PROXY_HOST" >> $HOME/.ssh/config
+        echo "  User $PROXY_USERNAME" >> $HOME/.ssh/config
+        echo "  IdentityFile $HOME/.ssh/deploy_key" >> $HOME/.ssh/config
+        echo "  StrictHostKeyChecking no" >> $HOME/.ssh/config
+        echo "  UserKnownHostsFile=/dev/null" >> $HOME/.ssh/config
+    
+    # Securely add SSH private key to runner
+    - name: Add SSH Keys
+      # Adds the SSH private key to the runner and sets appropriate permissions.
+      run: |
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/deploy_key
+        chmod 600 $HOME/.ssh/deploy_key
+    
+    # Attempting SSH connection to target via proxy with debugging logs
+    - name: SSH to Target via Proxy
+      # A command to SSH from the GitHub Actions runner to the target server via the proxy, with verbose logging for debugging.
+      run: |  
+        ssh -vvv -F $HOME/.ssh/config target "echo 'Connected to Target Server'"
+      

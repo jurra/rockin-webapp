@@ -1,0 +1,36 @@
+name: Test proxy server
+
+on:
+  push:
+    branches:
+      - master 
+      - feature/github-actions
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    
+    - name: Setup SSH Agent
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.PROXY_SSH_PRIVATE_KEY }}
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.PROXY_HOST }}
+        username: ${{ secrets.PROXY_USERNAME }}
+        key: ${{ secrets.PROXY_SSH_PRIVATE_KEY }}
+        password: ${{ secrets.PROXY_PASSWORD }}
+        run: |
+          ping -c 4 ${{ secrets.PROXY_HOST }}
+        script: |
+          echo "Deploying to server..."
+          ls ~/.ssh
+          echo "Deployed to server!"
+        # port: 22
+        timeout: 60s  # adjust this line as needed

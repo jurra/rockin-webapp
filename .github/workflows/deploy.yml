@@ -1,0 +1,43 @@
+name: Deploy to server
+
+on:
+  push:
+    branches:
+      - master 
+      - feature/github-actions
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup SSH Agent
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.PROXY_SSH_PRIVATE_KEY }}
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_DOMAIN }}
+        username: ${{ secrets.SERVER_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        passphrase: ${{ secrets.SSH_PASSPHRASE }}
+        # Proxy 
+        proxy_host: ${{ secrets.PROXY_HOST }}
+        proxy_username: ${{ secrets.PROXY_USERNAME }}
+        proxy_key: ${{ secrets.SSH_PROXY_PRIVATE_KEY }}
+        # proxy_password: ${{ secrets.PROXY_PASSWORD }}
+        script: |
+          echo "Deploying to server..."
+          # cd services/rockin_webapp.git
+          # git pull origin main  # Make sure the branch name matches your default branch
+          # docker-compose down
+          # docker-compose pull
+          # docker-compose up -d --build
+          # ecoho "Deployed to server!"
+        # port: 22
+        timeout: 60s  # adjust this line as needed
