@@ -28,6 +28,23 @@ jobs:
         echo "::add-mask::${{ secrets.PROXY_HOST }}"
         echo "::add-mask::${{ secrets.SERVER_USERNAME }}"
         echo "::add-mask::${{ secrets.PROXY_USERNAME }}"
+    
+    
+    - name: Add SSH Keys
+      run: |
+        echo "Ensuring .ssh directory exists..."
+        mkdir -p $HOME/.ssh
+        echo "Setting correct permissions for .ssh directory..."
+        chmod 700 $HOME/.ssh
+        echo "Creating SSH Key..."
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > $HOME/.ssh/deploy_key
+        echo "${{ secrets.PROXY_SSH_PRIVATE_KEY }}" > $HOME/.ssh/proxy_key
+        echo "Setting correct permissions for SSH Key..."
+        chmod 600 $HOME/.ssh/deploy_key
+        echo "Listing SSH Key..."
+        ls -l $HOME/.ssh/
+        echo "Displaying SSH Key Path..."
+        echo $HOME/.ssh/deploy_key
       
     # Ensuring SSH client availability for subsequent steps
     - name: Install SSH Client
@@ -45,10 +62,17 @@ jobs:
     
     # Attempting a direct SSH connection to the proxy for debugging purposes
     - name: Debug Direct SSH to Proxy
+      env:
+        SERVER_DOMAIN: ${{ secrets.SERVER_DOMAIN }}
+        PROXY_HOST: ${{ secrets.PROXY_HOST }}
+        SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
+        PROXY_USERNAME: ${{ secrets.PROXY_USERNAME }}
       # A direct SSH command to the proxy host with verbose logging enabled, to debug connection issues directly to the proxy.  
       run: |  
         echo "Direct SSH to Proxy for Debugging"
-        ssh -vvv -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i <(echo "${{ secrets.PROXY_SSH_PRIVATE_KEY }}") $PROXY_USERNAME@$PROXY_HOST "echo 'Connected to Proxy'"
+        # ssh -vvv -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i $HOME/.ssh/deploy_key $PROXY_USERNAME@$PROXY_HOST "echo 'Connected to Proxy'"
+        ssh -vvv -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${{ secrets.SSH_PRIVATE_KEY }} ${{ secrets.PROXY_USERNAME }}@${{ secrets.PROXY_HOST }} "echo 'Connected to Proxy'"
+
     
     # Setup SSH configuration for proxy jumping
     - name: Setup SSH Config
