@@ -16,6 +16,8 @@ jobs:
 
     # Masking sensitive values in logs
     - name: Mask Secrets
+      # This step will mask the defined secrets in the logs, avoiding unintentional exposure.
+      
       run: |
         echo "SERVER_DOMAIN=${{ secrets.SERVER_DOMAIN }}" >> $GITHUB_ENV
         echo "PROXY_HOST=${{ secrets.PROXY_HOST }}" >> $GITHUB_ENV
@@ -46,7 +48,7 @@ jobs:
       # A direct SSH command to the proxy host with verbose logging enabled, to debug connection issues directly to the proxy.  
       run: |  
         echo "Direct SSH to Proxy for Debugging"
-        ssh -vvv -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i <(echo "${{ secrets.SSH_PRIVATE_KEY }}") $PROXY_USERNAME@$PROXY_HOST "echo 'Connected to Proxy'"
+        ssh -vvv -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i <(echo "${{ secrets.PROXY_SSH_PRIVATE_KEY }}") $PROXY_USERNAME@$PROXY_HOST "echo 'Connected to Proxy'"
     
     # Setup SSH configuration for proxy jumping
     - name: Setup SSH Config
