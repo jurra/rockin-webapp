@@ -7,7 +7,14 @@ networks:
 services:
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:5000
+    # These are the commands that will be run when the container is started
+    # You could also run these commands within the container itselft
+    # For example: docker exec -it <container_name> python manage.py collectstatic --noinput
+    # Or docker get inside the container via the terminal: exec -it <container_name> sh     
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:5000"
     ports:
       - "5000:5000"
     restart: always
