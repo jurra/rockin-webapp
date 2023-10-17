@@ -4,8 +4,10 @@ requires = [
     "wheel>=0.37.0",
     "toml>=0.10.2",
     "gitpython>=2.1.0",
-    'django',
+    'Django',
 ]
+
+requires-python = "^3.8"
 build-backend = "setuptools.build_meta"
 
 
@@ -15,10 +17,14 @@ version = "0.1.0"
 description = "A simple data entry webapp to enter rock sample data from wells digged with TU Delft"
 
 dependencies = [
+    'Django',
     'mysqlclient',
     'django-widget-tweaks',
     'pydantic',
     'python-dotenv',
+    'gunicorn==19.9.0',
+    # 'psycopg2==2.7.7', # Required for postgres not necessary at the moment
+    'redis==3.2.1',
 ]
 
 
