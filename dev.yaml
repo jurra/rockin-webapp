@@ -1,0 +1,45 @@
+version: "3.9"
+
+networks:
+  my_network:
+    driver: bridge
+
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:5000
+    ports:
+      - "5000:5000"
+    restart: always
+    depends_on:
+      - db
+      - redis
+    networks:
+      - my_network
+  db:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: always
+    environment:
+      - ALLOWED_HOSTS="localhost"
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PWD}
+      - MYSQL_ROOT_PASSWORD=${DB_PWD}
+      - MYSQL_HOST=${DB_HOST}
+    env_file:
+      - .env
+    networks:
+      - my_network
+
+  redis:
+    image: "redis:alpine"
+    restart: always
+    networks:
+      - my_network
+
+volumes:
+  mysql_data:
