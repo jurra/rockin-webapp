@@ -7,6 +7,14 @@ networks:
 services:
   web:
     build: .
+    # These are the commands that will be run when the container is started
+    # You could also run these commands within the container itselft
+    # For example: docker exec -it <container_name> python manage.py collectstatic --noinput
+    # Or docker get inside the container via the terminal: exec -it <container_name> sh     
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:5000"
     ports:
       - "5000:5000"
     restart: always
@@ -24,10 +32,13 @@ services:
       - mysql_data:/var/lib/mysql
     restart: always
     environment:
+      - ALLOWED_HOSTS="localhost"
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PWD}
       - MYSQL_ROOT_PASSWORD=${DB_PWD}
+      - MYSQL_HOST=${DB_HOST}
+
     env_file:
       - .env
     networks:
