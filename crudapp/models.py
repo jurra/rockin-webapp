@@ -7,6 +7,10 @@ from django.forms.models import model_to_dict
 from django.core.validators import MinValueValidator
 from django.contrib.auth.models import User
 
+DRILLING_MUD_CHOICES = [
+        ('Water-based mud', 'Water-based mud'),
+        ('Oil-based mud', 'Oil-based mud')
+]
 
 class Contact(models.Model):
     firstName = models.CharField(
@@ -47,7 +51,6 @@ class Well(models.Model):
         short_name = re.split(r'[-\s]+', self.name)
         return ''.join(short_name)
 
-
 class RockinBase(models.Model):
     well = models.ForeignKey(Well, on_delete=models.CASCADE,
                 help_text="The id of the well", related_name='corechips_well')
@@ -60,10 +63,7 @@ class RockinBase(models.Model):
         help_text="The date when the core was collected", default=timezone.now)
     remarks = models.CharField(
         max_length=255, help_text="The remarks of the section of a meter sample")
-    DRILLING_MUD_CHOICES = [
-        ('Water-based mud', 'Water-based mud'),
-        ('Oil-based mud', 'Oil-based mud')
-    ]
+
     drilling_mud = models.CharField(
         max_length=17,
         choices=DRILLING_MUD_CHOICES,
@@ -282,10 +282,29 @@ class Cuttings(RockinBase):
         verbose_name_plural = "Cuttings"
 
 
-class MicroCore(RockinBase):
-    # id = models.AutoField(primary_key=True, help_text="The id of the core")
+class MicroCore(models.Model):
     well = models.ForeignKey(Well, on_delete=models.CASCADE,
-                             help_text="The id of the well", related_name='microcores_well')
+                help_text="The id of the well", related_name='corechips_well')
+
+    registration_date = models.DateTimeField(
+        help_text="The time when the core was registered in the database",
+        auto_now_add=True)
+    registered_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    collection_date = models.DateTimeField(
+        help_text="The date when the core was collected", default=timezone.now)
+    remarks = models.CharField(
+        max_length=255, help_text="The remarks of the section of a meter sample")
+
+    drilling_mud = models.CharField(
+        max_length=17,
+        choices=DRILLING_MUD_CHOICES,
+        null=True,
+        blank=True,
+        help_text="The drilling mud used for the perforation of the core"
+    )
+    lithology = models.CharField(
+        max_length=255, null=True, blank=True, help_text="The lithology of the core")
+
     micro_core_number = models.IntegerField(
         help_text="The predefined name of the micro core")
     micro_core_name = models.CharField(
