@@ -12,9 +12,7 @@ services:
     # For example: docker exec -it <container_name> python manage.py collectstatic --noinput
     # Or docker get inside the container via the terminal: exec -it <container_name> sh     
     command: >
-      sh -c "/wait-for.sh db:3306 --
-	     python manage.py makemigrations crudapp &&
-             python manage.py migrate &&
+      sh -c "/wait-for.sh db:3306 -- python manage.py makemigrations crudapp && python manage.py migrate &&
              python manage.py runserver 0.0.0.0:5000"
     ports:
       - "5000:5000"
