@@ -12,7 +12,7 @@ services:
     # For example: docker exec -it <container_name> python manage.py collectstatic --noinput
     # Or docker get inside the container via the terminal: exec -it <container_name> sh     
     command: >
-      sh -c "python manage.py collectstatic --noinput &&
+      sh -c "/wait-for.sh db:3306 --
              python manage.py migrate &&
              python manage.py runserver 0.0.0.0:5000"
     ports:
@@ -25,7 +25,7 @@ services:
       - my_network
   
   db:
-    image: mysql:5.7
+    image: mysql:8.0
     ports:
       - "3306:3306"
     volumes:
@@ -36,7 +36,7 @@ services:
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PWD}
-      - MYSQL_ROOT_PASSWORD=${DB_PWD}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PWD}
       - MYSQL_HOST=${DB_HOST}
 
     env_file:
@@ -79,8 +79,8 @@ services:
      - ACME_URL="https://acme.sectigo.com/v2/GEANTOV"
      - ACME_KID
      - ACME_HMAC
-       #    env_file: 
-       # - /home/rocky/sectigo.env
+    env_file: 
+     - .env
 
 volumes:
   letsencrypt:

@@ -3,7 +3,7 @@ FROM python:3.8-alpine
 
 WORKDIR /code
 
-RUN apk add --no-cache gcc musl-dev linux-headers mysql-client git mariadb-dev build-base
+RUN apk update && apk upgrade --no-cache && apk add --no-cache gcc musl-dev linux-headers mysql-client git mariadb-dev build-base
 
 COPY wait-for.sh /wait-for.sh
 RUN chmod +x /wait-for.sh
