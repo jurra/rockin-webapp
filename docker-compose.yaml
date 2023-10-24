@@ -1,87 +1,108 @@
+# The version key specifies the version of the Docker Compose file format.
 version: "3.9"
 
+# Networks defined here can be used to connect different containers.
 networks:
   my_network:
+    # The bridge network driver creates a private internal network on your host,
+    # and all containers connected to it get a private IP.
     driver: bridge
 
+# The services key is used to define all the containers you want to run.
 services:
+  # Define a service named 'web'.
   web:
+    # Build the Docker image for the web service using the Dockerfile in the current directory.
     build: .
+    # Override the default command to run in the container.
     # These are the commands that will be run when the container is started
-    # You could also run these commands within the container itselft
-    # For example: docker exec -it <container_name> python manage.py collectstatic --noinput
-    # Or docker get inside the container via the terminal: exec -it <container_name> sh     
+    # You could also run these commands within the container it self:
+    #       - For example: docker exec -it <container_name> python manage.py collectstatic --noinput
+    #       - Or docker get inside the container via the terminal: exec -it <container_name> sh     
+    # wait-for.sh is a script that will wait for a service to be available before running the next command
     command: >
-      sh -c "/wait-for.sh db:3306 --
+      sh -c "/wait-for.sh db:3306 -- 
              python manage.py migrate &&
              python manage.py runserver 0.0.0.0:5000"
+    # Map port 5000 on the host to port 5000 in the container.
     ports:
       - "5000:5000"
+    # Always restart the container if it stops.
     restart: always
+    # Only start this container after db and redis have started.
     depends_on:
       - db
       - redis
+    # Connect this service to the my_network network.
     networks:
       - my_network
   
+  # Define a service named 'db' using the official MySQL 8.0 image.
   db:
     image: mysql:8.0
     ports:
-      - "3306:3306"
+      - "3306:3306" # Map port 3306 on the host to port 3306 in the container.
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql # Persist the MySQL data using a named volume.
     restart: always
     environment:
-      - ALLOWED_HOSTS="localhost"
+      # Set environment variables in the container.
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PWD}
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PWD}
       - MYSQL_HOST=${DB_HOST}
-
+    # Load environment variables from a file named .env.
     env_file:
       - .env
     networks:
       - my_network
 
+  # Define a service named 'redis' using the official Redis Alpine image.
   redis:
     image: "redis:alpine"
     restart: always
     networks:
       - my_network
 
+  # Define a service named 'nginx' using the official NGINX image.
   nginx:
     image: nginx:latest
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:80"     # Map port 80 on the host to port 80 in the container.
+      - "443:443"   # Map port 443 on the host to port 443 in the container.
     volumes:
+      # Mount configuration files and certificates from the host to the container.
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./letsencrypt:/etc/letsencrypt
       - /var/www/html:/usr/share/nginx/html
     depends_on:
-      - web
+      - web # Only start this container after the web service has started.
     networks:
       - my_network
 
+  # Define a service named 'certbot' using the official Certbot image.
   certbot:
     image: certbot/certbot
     volumes:
+      # Mount the Let's Encrypt directory and the webroot directory from the host to the container.
       - ./letsencrypt:/etc/letsencrypt
       - /var/www/html:/var/www/html
     command: certonly --webroot --webroot-path=/var/www/html --agree-tos --non-interactive --email=jose.urra86@gmail.com --domains gsedata.citg.tudelft.nl --server ${ACME_URL} --eab-kid ${ACME_KID} --eab-hmac-key ${ACME_HMAC} --cert-name OVcert
     networks:
       - my_network
     depends_on:
-      - nginx
-    restart: "no"
+      - nginx # Only start this container after the nginx service has started.
+    restart: "no" # Do not automatically restart this container.
     environment:
-     - ACME_URL="https://acme.sectigo.com/v2/GEANTOV"
-     - ACME_KID
-     - ACME_HMAC
+      # Set the ACME server URL and credentials as environment variables, and load other variables from a file.
+      - ACME_URL="https://acme.sectigo.com/v2/GEANTOV"
+      - ACME_KID
+      - ACME_HMAC
     env_file: 
-     - .env
+      - .env
 
+# Define named volumes to be used by services.
 volumes:
   letsencrypt:
   html:
