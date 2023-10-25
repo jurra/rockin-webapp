@@ -22,9 +22,9 @@ dependencies = [
     'django-widget-tweaks',
     'pydantic',
     'python-dotenv',
-    'gunicorn==19.9.0',
+    'gunicorn==19.9', # Keep it to 19.9 so that we get the security patches for example
     # 'psycopg2==2.7.7', # Required for postgres not necessary at the moment
-    'redis==3.2.1',
+    'redis==3.2',
 ]
 
 
