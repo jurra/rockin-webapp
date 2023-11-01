@@ -1,6 +1,7 @@
 import pprint as pp
 
 from typing import Any, Dict
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
 
 # Create your views here.
@@ -178,6 +179,7 @@ class WellCoreListView(ListView):
 
             return render(request, self.template_name, {'well': well,
                                                         'cores': cores})
+            
 
         except Well.DoesNotExist:
             return render(request, self.template_name, {'well': None, 'cores': None})
@@ -193,22 +195,25 @@ class CoreFormView(FormView):
     success_url = reverse_lazy('well_core_list')
 
     # Define relationship between the core and the well
-    well_name = ""
+    well_name = None
     well = None
     core_number = None
 
-    def set_well_name_from_url(self):
-        self.well_name = self.request.GET.get('well_name')
-
-    def set_success_url(self,):
-        self.success_url = reverse_lazy(
-            'well_core_list', kwargs={'pk': self.well.pk})
-
+    def set_well_name(self, well_name):
+        self.well_name = well_name
+    
     def set_well(self):
         try:
             self.well = Well.objects.get(name=self.well_name)
         except Well.DoesNotExist:
             self.well = None
+
+    def set_success_url(self):
+        if self.well is not None:
+            self.success_url = reverse_lazy(
+                'well_core_list', kwargs={'pk': self.well.pk})
+        else:
+            raise Exception('Well is None')
 
     def set_core_section_number(self):
         self.core_number = self.request.GET.get('core_number')
@@ -225,24 +230,24 @@ class CoreFormView(FormView):
                 return 1
 
     def get_initial(self):
-        ''' With this function we pre-populate the form with initial values to avoid that users
-        having to type the same values over and over again 
+        '''With this function, we pre-populate the form with initial values to avoid having users
+        type the same values repeatedly.
         '''
         initial = super().get_initial()
 
-        # Define all the initial values of the form object
-        self.set_well_name_from_url()
-        self.set_well()
-        self.set_success_url()
+        # Capture well_name from the URL query parameters
+        well_name = self.request.GET.get('well_name')
+        print('GET-DEBUG: well_name =', well_name)
 
+        # Ensure that well_name is not None before assigning it
+        assert well_name is not None, 'well_name is None'
+        initial['well'] = well_name
         # Propose the user collection date as the current date and time
         initial['collection_date'] = timezone.now()
 
-        initial['well'] = self.well_name
-
         core_number = self.request.GET.get('core_number')
         initial['core_number'] = core_number
-        initial['core_section_number'] = self.set_core_section_number()
+        initial['core_section_number'] = self.set_core_section_number()    
         return initial
 
     # Create section name based on the well name, the core number and the core section number
@@ -301,7 +306,7 @@ class CoreChipFormView(FormView):
     well_name = None
     core_number = None
 
-    def set_well_name_from_url(self, well_name):
+    def set_well_name(self, well_name):
         self.well_name = well_name
 
     def set_success_url(self):
@@ -340,7 +345,8 @@ class CoreChipFormView(FormView):
         # Propose the user collection date as the current date and time
         initial['collection_date'] = timezone.now()
 
-        initial['well'] = self.well_name
+        # initial['well'] = self.well_name
+        initial['well_name'] = self.well_name
 
         core_number = self.request.GET.get('core_number')
         initial['core_number'] = core_number
@@ -355,13 +361,15 @@ class CoreChipFormView(FormView):
             'well_name': request.GET.get('well_name'),
             'core_number': request.GET.get('core_number'),
             'core_section_name': request.GET.get('core_section_name'),
+            'core_section_number': request.GET.get('core_section_number'),
+            'collection_date': timezone.now(),
         }
 
         self.initial = data
         form = self.form_class(initial=data)
 
         # Define all the initial values of the form object
-        self.set_well_name_from_url(data['well_name'])
+        self.set_well_name(data['well_name'])
 
         # Set success url based on well pk
         return render(request, self.template_name, {'form': form, **data})
@@ -376,7 +384,7 @@ class CoreChipFormView(FormView):
         if well_name is None:
             raise Exception('Query data does not have the well_name')
 
-        self.set_well_name_from_url(well_name=data['well_name'])
+        self.set_well_name(well_name=data['well_name'])
         self.set_well()
         self.set_success_url()
 
