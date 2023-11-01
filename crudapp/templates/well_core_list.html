@@ -10,7 +10,7 @@
     <li>No cores available.</li>
   {% endfor %}
 </ul>
-<form id="core-form" method="POST" action="{% url 'cores' pk=well.pk %}?well_name={{ well.name }}&core_number=">
+<form id="core-form" method="GET" action="{% url 'cores' pk=well.pk %}">
   {% csrf_token %}
   <select name="core_number">
     <option value="">Select Core Number</option>
@@ -24,20 +24,8 @@
     <option value="C8" {% if core_number == 'C8' %}selected{% endif %}>C8</option>
     <option value="C9" {% if core_number == 'C9' %}selected{% endif %}>C9</option>
   </select>
-  <input type="hidden" name="well_name" value="{{ well_name }}">
+  <input type="hidden" name="well_name" value="{{ well }}">
   <button type="submit">Add a core</button>
 </form>
-<script>
-    document.getElementById('core-form').addEventListener('submit', function(event) {
-      var coreNumberValue = document.querySelector('[name="core_number"]');
-      if (coreNumberValue.value === "") {
-        event.preventDefault();
-        alert('Please select a core number.');
-      } else {
-        var actionUrl = "{% url 'cores' pk=well.pk %}?well_name={{ well.name }}&core_number=" + encodeURIComponent(coreNumberValue.value);
-        document.getElementById('core-form').action = actionUrl;
-      }
-    });
-</script>
 
 {% endblock %}
