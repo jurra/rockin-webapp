@@ -5,7 +5,9 @@
     <h1>Wells:</h1>
     <ul>
         {% for well in wells %}
-            <li><a href="{% url 'well_core_list' pk=well.pk %}">{{ well }}</a></li>
+            <li><a href="{% url 'create_sample' pk=well.pk %}">{{ well }}
+                <input type="hidden" name="well_pk" value="{{ well.pk }}">
+            </a></li>
         {% endfor %}
     </ul>
 {% else %}

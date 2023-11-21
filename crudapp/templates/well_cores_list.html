@@ -2,17 +2,10 @@
 
 {% block content %}
 <h1>Well Name: {{ well }}</h1>
-<h2>Cores:</h2>
-<ul>
-  {% for core in cores %}
-    <li>{{ core.core_section_name }}</li>
-  {% empty %}
-    <li>No cores available.</li>
-  {% endfor %}
-</ul>
-<form id="core-form" method="GET" action="{% url 'cores' pk=well.pk %}">
-  {% csrf_token %}
-  <select name="core_number">
+
+<form id="core-form" method="GET" action="{% url 'core_form' pk=well.pk %}">
+  <!-- {% csrf_token %} -->
+  <select id="core-number-select" name="core_number">
     <option value="">Select Core Number</option>
     <option value="C1" {% if core_number == 'C1' %}selected{% endif %}>C1</option>
     <option value="C2" {% if core_number == 'C2' %}selected{% endif %}>C2</option>
@@ -27,5 +20,14 @@
   <input type="hidden" name="well_name" value="{{ well }}">
   <button type="submit">Add a core</button>
 </form>
+<script>
+  document.getElementById('core-form').addEventListener('submit', function(event) {
+      var coreNumberSelect = document.getElementById('core-number-select');
+      if (coreNumberSelect.value === "") {
+          event.preventDefault();  // Prevent form from submitting
+          alert('Please select a core number before submitting.');
+      }
+  });
+</script>
 
 {% endblock %}

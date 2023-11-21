@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Well Name: {{ well }}</h1>
+
+<form id="sample-form" method="GET">
+    <select name="sample_type" id="sample-type">
+        <option value="">Select Sample type</option>
+        <option value="Core">Core</option>
+        <option value="Core Catcher">Core Catcher</option>
+        <option value="Microcore">Microcore</option>
+        <!-- <option value="cuttings" {% if core_number == 'Cuttings' %}selected{% endif %}>Cuttings</option> -->
+        <option value="Corechip">Corechip</option>
+    </select>
+    <input type="hidden" name="well_name" value="{{ well }}">
+    <input type="hidden" name="well_pk" value="{{ well.pk }}">
+    <button type="submit">Create sample</button>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('sample-type').addEventListener('change', function() {
+            var selectedOption = this.value;
+            var form = document.getElementById('sample-form');
+            var wellPk = "{{ well.pk }}";
+
+            var urlMap = {
+                'core': '{% url "core_form" 0 %}',
+                'core_catcher': '{% url "core_form" 0 %}',
+                'microcore': '{% url "microcores" 0 %}',
+                'corechip': '{% url "corechips_select" 0 %}',
+            };
+
+            if (selectedOption in urlMap) {
+                form.action = urlMap[selectedOption].replace('0', wellPk);
+            } else {
+                form.action = ''; // default action or error handling
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+
+
+
+
