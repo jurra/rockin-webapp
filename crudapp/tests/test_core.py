@@ -106,7 +106,7 @@ def test_core_form_view_get_initial(well, request_factory):
     
     # The request url should be this one:/wells/1/cores/create/?well_name=DAP&core_number=C1
     # Build request so that it resembles the one above
-    request = request_factory.get(reverse('cores'), {'well_name': well.name, 'core_number': 'C1'})
+    request = request_factory.get(reverse('core_form'), {'well_name': well.name, 'core_number': 'C1'})
     view.request = request
 
     view.kwargs = {'pk': well.pk, 'well': well.name}  
@@ -120,7 +120,7 @@ def test_core_form_view_get_initial(well, request_factory):
 @pytest.mark.django_db
 def test_core_form_view_post(auth_client, well, user, core_data):
     # Create a POST request with form data
-    request_url = reverse('cores')  # Replace 'cores' with the actual URL name of the view
+    request_url = reverse('core_form')  # Replace 'core_form' with the actual URL name of the view
 
     # Append query parameters to the success URL
     query_params = {

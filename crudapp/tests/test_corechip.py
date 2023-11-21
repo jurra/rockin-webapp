@@ -32,7 +32,7 @@ def corechip_post_request(user, well):
 
     # Make a post request to create a corechip
     well_id = well.id
-    url = reverse('well_core_list', args=[well_id])  # Replace 'corechip_create' with the actual URL name of the view for corechip creation
+    url = reverse('select_core_number', args=[well_id])  # Replace 'corechip_create' with the actual URL name of the view for corechip creation
     response = client.post(url, data=corechip_json)
 
     return response
