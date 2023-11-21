@@ -1,4 +1,5 @@
 import pprint as pp
+import json
 
 from typing import Any, Dict
 from django.http import HttpRequest, HttpResponse
@@ -7,7 +8,7 @@ from django.shortcuts import render
 # Create your views here.
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Max
-from django.views.generic import ListView, DetailView, FormView
+from django.views.generic import ListView, DetailView, FormView, View
 from django.urls import reverse_lazy
 from django.utils import timezone
 
@@ -62,6 +63,13 @@ def delete(request, pk, template_name='confirm_delete.html'):
         contact.delete()
         return redirect('index')
     return render(request, template_name, {'object': contact})
+
+def get_well_from_pk(well_pk, Well):
+    try:
+        well = Well.objects.get(pk=well_pk)
+        return well
+    except Well.DoesNotExist:
+        raise Exception('No well was passed to the view')
 
 
 def _validate(payload, **kwargs):
@@ -124,6 +132,35 @@ class WellListView(ListView):
             return render(request, self.template_name, {'wells': None})
 
 
+class SampleFormView(View):
+    ''' This view is used to create a new sample
+    it handles different types of samples, for example: Core, CoreChip, MicroCore, depending on the selected type
+    the view will redirect the user to the correct form
+    '''
+    model = Well
+    template_name = 'create_sample.html'  # Replace with your form template
+    success_url = reverse_lazy('create_sample', kwargs={'pk': 'pk'})
+
+    def get(self, request, *args, **kwargs):
+        well_pk = self.kwargs.get('pk')
+        well = get_well_from_pk(well_pk=well_pk, Well=self.model)
+        sample_type = request.GET.get('sample_type')
+        
+        if sample_type:
+            if sample_type == 'Core':
+                return redirect(reverse_lazy('select_core_number', kwargs={'pk': well_pk}))
+            elif sample_type == 'Core Catcher':
+                return redirect(reverse_lazy('select_core_number', kwargs={'pk': well_pk}))
+            elif sample_type == 'Microcore':
+                return redirect(reverse_lazy('microcores', kwargs={'pk': well_pk}))
+            # elif sample_type == 'Cuttings':
+            #     return redirect(reverse_lazy('cuttings', kwargs={'pk': well_pk}))
+            elif sample_type == 'Corechip':
+                return redirect(reverse_lazy('corechips_select', kwargs={'pk': well_pk}))
+        
+        # Default action if sample_type is empty or doesn't match
+        return render(request, self.template_name, {'well': well})
+
 class WellFormView(FormView):
     template_name = 'well.html'
     form_class = WellForm
@@ -168,21 +205,19 @@ class WellCoreListView(ListView):
     ''' This view is used to list all the cores that belong to a well
     '''
     model = Well
-    template_name = 'well_core_list.html'
-    context_object_name = 'well_core_list'
-    success_url = reverse_lazy('cores')
+    template_name = 'well_cores_list.html'
+    context_object_name = 'select_core_number'
+    success_url = reverse_lazy('core_form')
 
     def get(self, request, *args, **kwargs):
         try:
-            well = Well.objects.get(pk=self.kwargs['pk'])
+            well = get_well_from_pk(well_pk=self.kwargs['pk'], Well=self.model)
             cores = Core.objects.filter(well=well)
 
             return render(request, self.template_name, {'well': well,
-                                                        'cores': cores})
-            
-
+                                                        'core_form': cores})
         except Well.DoesNotExist:
-            return render(request, self.template_name, {'well': None, 'cores': None})
+            return render(request, self.template_name, {'well': None, 'core_form': None})
 
 
 class CoreFormView(FormView):
@@ -192,7 +227,7 @@ class CoreFormView(FormView):
     '''
     template_name = 'core.html'
     form_class = CoreForm
-    success_url = reverse_lazy('well_core_list')
+    success_url = reverse_lazy('select_core_number')
 
     # Define relationship between the core and the well
     well_name = None
@@ -211,7 +246,7 @@ class CoreFormView(FormView):
     def set_success_url(self):
         if self.well is not None:
             self.success_url = reverse_lazy(
-                'well_core_list', kwargs={'pk': self.well.pk})
+                'select_core_number', kwargs={'pk': self.well.pk})
         else:
             raise Exception('Well is None')
 
@@ -237,7 +272,6 @@ class CoreFormView(FormView):
 
         # Capture well_name from the URL query parameters
         well_name = self.request.GET.get('well_name')
-        print('GET-DEBUG: well_name =', well_name)
 
         # Ensure that well_name is not None before assigning it
         assert well_name is not None, 'well_name is None'
@@ -295,11 +329,22 @@ class CoreFormView(FormView):
             print(form.errors)
             return self.form_invalid(form)
 
+class CoreChipSelectView(ListView):
+    template_name = 'corechip_select.html'
+    success_url = ""
+
+    def get(self, request, *args, **kwargs):
+        well = get_well_from_pk(well_pk=self.kwargs['pk'], Well=Well)
+        cores = Core.objects.filter(well=well)
+
+        self.success_url = reverse_lazy('corechips_select', kwargs={'pk': well.pk})
+        return render(request, self.template_name, {'well': well,
+                                                    'corechips_select': cores})
 
 class CoreChipFormView(FormView):
     template_name = 'corechip_form.html'
     form_class = CoreChipForm
-    success_url = reverse_lazy('well_core_list')
+    success_url = reverse_lazy('select_core_number')
 
     # A Well object
     well = None
@@ -312,7 +357,7 @@ class CoreChipFormView(FormView):
     def set_success_url(self):
         if self.well is not None:
             self.success_url = reverse_lazy(
-                'well_core_list', kwargs={'pk': self.well.pk})
+                'select_core_number', kwargs={'pk': self.well.pk})
         else:
             raise Exception('Well is None')
 
@@ -354,7 +399,7 @@ class CoreChipFormView(FormView):
         return initial
 
     def get(self, request, *args, **kwargs):
-        # Extract initial data from GET request parameters
+        # We extract initial data from GET request parameters to pre-populate the form
         data = {
             'well': request.GET.get('well_name'),
             'well_pk': request.GET.get('well_pk'),
