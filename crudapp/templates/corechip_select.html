@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<ul>
+    {% for core in corechips_select %}
+    <li>
+        <form action="{% url 'corechips' pk=well.pk %}" method="GET">
+            {{ core.core_section_name }}
+            <input type="hidden" name="core_name" value="{{ core.core_name }}">
+            <input type="hidden" name="pk" value="{{ well.pk }}">
+            <!-- Add other core properties as needed -->
+            <button type="submit">Create corechip</button>
+        </form>
+    </li>
+    {% empty %}
+    <li>No cores available.</li>
+    {% endfor %}
+</ul>
+{% endblock %}
