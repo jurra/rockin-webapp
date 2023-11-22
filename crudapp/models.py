@@ -251,7 +251,8 @@ class CoreChip(CoreBase):
 class Cuttings(RockinBase):
     # id = models.AutoField(primary_key=True, help_text="The id of the core")
     well = models.ForeignKey(Well, on_delete=models.CASCADE,
-                             help_text="The id of the well", related_name='cuttings_well')
+                             help_text="The id of the well", related_name='cuttings_well',
+                             to_field='name')
     cuttings_number = models.IntegerField(
         help_text="The predefined name of the cuttings")
     cuttings_name = models.CharField(
