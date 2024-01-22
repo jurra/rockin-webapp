@@ -26,7 +26,7 @@ load_dotenv()
 SECRET_KEY = 'django-insecure-zj*vccogzcfujkxjl#n#*7um)mz!b34%)nw@2ys5$q&)veq9ps'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', False)
 
 ALLOWED_HOSTS = [
     'localhost', os.environ.get('APP_HOST'), os.environ.get('DB_HOST')
@@ -165,7 +165,8 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CSRF_TRUSTED_ORIGINS = [os.getenv('APP_HOST')]   
+CSRF_TRUSTED_ORIGINS = [os.environ.get('APP_HOST')]   
+
 CSRF_COOKIE_SECURE = True  # Set to True if you are using HTTPS
 CSRF_COOKIE_HTTPONLY = False  # Default is False; setting to True means JavaScript will not be able to access the cookies
 
