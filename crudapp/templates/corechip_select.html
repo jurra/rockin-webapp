@@ -6,9 +6,11 @@
     <li>
         <form action="{% url 'corechips' pk=well.pk %}" method="GET">
             {{ core.core_section_name }}
-            <input type="hidden" name="core_name" value="{{ core.core_name }}">
+            <input type="hidden" name="core_section_name" value="{{ core.core_section_name }}">
             <input type="hidden" name="pk" value="{{ well.pk }}">
-            <!-- Add other core properties as needed -->
+            <input type="hidden" name="well_name" value="{{ well }}">
+            <input type="hidden" name="core_section_number" value="{{ core.core_section_number }}">
+            <input type="hidden" name="core_number" value="{{ core.core_number }}">
             <button type="submit">Create corechip</button>
         </form>
     </li>

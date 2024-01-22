@@ -201,7 +201,7 @@ class WellFormView(FormView):
             return self.form_invalid(form)
 
 
-class WellCoreListView(ListView):
+class CoreNumberSelectView(ListView):
     ''' This view is used to list all the cores that belong to a well
     '''
     model = Well
@@ -227,7 +227,7 @@ class CoreFormView(FormView):
     '''
     template_name = 'core.html'
     form_class = CoreForm
-    success_url = reverse_lazy('select_core_number')
+    success_url = reverse_lazy('create_sample')
 
     # Define relationship between the core and the well
     well_name = None
@@ -246,7 +246,7 @@ class CoreFormView(FormView):
     def set_success_url(self):
         if self.well is not None:
             self.success_url = reverse_lazy(
-                'select_core_number', kwargs={'pk': self.well.pk})
+                'create_sample', kwargs={'pk': self.well.pk})
         else:
             raise Exception('Well is None')
 
@@ -287,6 +287,11 @@ class CoreFormView(FormView):
     # Create section name based on the well name, the core number and the core section number
     def post(self, request, *args, **kwargs):
         post_data = request.POST.dict()
+        
+        # Setup success url based on well name submitted in the post request data
+        self.well_name = post_data.get('well')
+        self.set_well()
+        self.set_success_url()
 
         # We do this because pydantic needs an id to be created
         if 'id' not in post_data:
