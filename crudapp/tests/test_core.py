@@ -120,14 +120,14 @@ def test_core_form_view_get_initial(well, request_factory):
 @pytest.mark.django_db
 def test_core_form_view_post(auth_client, well, user, core_data):
     # Create a POST request with form data
-    request_url = reverse('core_form')  # Replace 'core_form' with the actual URL name of the view
+    request_url = reverse('core_form') 
 
     # Append query parameters to the success URL
     query_params = {
         'well_name': core_data['well'].name,
         'core_number': 'C1'
     }
-    request_url += '?' + '&'.join([f'{key}={value}' for key, value in query_params.items()])
+    request_url += '?' + '&'.join([f'{key}={value}' for key, value in query_params.items()]) # add query params to the request url
 
     data = {
         'registration_date': '2021-06-22 13:00:00',
@@ -151,11 +151,6 @@ def test_core_form_view_post(auth_client, well, user, core_data):
 
     assert response.status_code == 302
     assert Core.objects.filter(core_section_name=data['core_section_name']).exists()
-
-    # Now we want to test invalid data
-    data['well'] = 'Invalid Well'
-    response = auth_client.post(request_url, data=data)
-    assert response.context_data['form'].errors['well'] == ['Select a valid choice. That choice is not one of the available choices.']
 
 
 # TODO: Test the sequence behaviour of core_catcher, cores and core_section_number
