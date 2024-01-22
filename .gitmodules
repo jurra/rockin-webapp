@@ -1,3 +1,4 @@
-[submodule "datamodel"]
+[submodule "datatamodel"]
 	path = datamodel
 	url = git@github.com:jurra/rockin-datamodel.git
+

@@ -7,28 +7,28 @@ networks:
 services:
   web:
     build: .
+    command: ["tail", "-f", "/dev/null"]
     # These are the commands that will be run when the container is started
     # You could also run these commands within the container itselft
     # For example: docker exec -it <container_name> python manage.py collectstatic --noinput
     # Or docker get inside the container via the terminal: exec -it <container_name> sh     
-    command: >
-      sh -c "sh /wait-for.sh db:3306 --
-             python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:5000"
+    # command: >
+    #  sh -c "sh /wait-for.sh db:3308 --
+    #         python manage.py migrate &&
+    #         python manage.py runserver 0.0.0.0:5000"
     ports:
-      - "5000:5000"
-    restart: always
+      - "5001:5000"
+    # restart: always
     depends_on:
       - db
       - redis
-#    networks:
-#      - my_network
+
     links:
       - "db:db"
   db:
     image: mysql:8.0
     ports:
-      - "3306:3306"
+      - "3308:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     restart: always
@@ -39,16 +39,13 @@ services:
       - MYSQL_PASSWORD=${DB_PWD}
       - MYSQL_ROOT_PASSWORD=${DB_PWD}
       - MYSQL_HOST=${DB_HOST}
+      - MYSQL_PORT=${DB_LILIANA_PORT}
     env_file:
       - .env
-#    networks:
-#      - my_network
 
   redis:
     image: "redis:alpine"
     restart: always
-#    networks:
-#      - my_network
 
 volumes:
   mysql_data:

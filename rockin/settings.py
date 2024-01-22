@@ -78,6 +78,8 @@ TEMPLATES = [
     },
 ]
 
+# STATIC_ROOT = os.path.join(BASE_DIR, 'crudapp/templates')
+
 WSGI_APPLICATION = 'rockin.wsgi.application'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
@@ -162,3 +164,9 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CSRF_TRUSTED_ORIGINS = [os.getenv('APP_HOST')]   
+CSRF_COOKIE_SECURE = True  # Set to True if you are using HTTPS
+CSRF_COOKIE_HTTPONLY = False  # Default is False; setting to True means JavaScript will not be able to access the cookies
+
+

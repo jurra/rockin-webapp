@@ -21,8 +21,7 @@ services:
     #       - Or docker get inside the container via the terminal: exec -it <container_name> sh     
     # wait-for.sh is a script that will wait for a service to be available before running the next command
     command: >
-      sh -c "/wait-for.sh db:3306 -- 
-             python manage.py migrate &&
+      sh -c "/wait-for.sh db:3306 -- python manage.py makemigrations crudapp && python manage.py migrate &&
              python manage.py runserver 0.0.0.0:5000"
     # Map port 5000 on the host to port 5000 in the container.
     ports:
