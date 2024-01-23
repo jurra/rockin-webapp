@@ -21,6 +21,25 @@ from pydantic import ValidationError
 # we keep datamodel as a namespace to avoid confusion with the django models
 import datamodel
 
+def set_well_name(view_instance, well_name):
+    view_instance.well_name = well_name
+
+def set_well(view_instance, Well):
+    try:
+        view_instance.well = Well.objects.get(name=view_instance.well_name)
+    except Well.DoesNotExist:
+        view_instance.well = None
+
+def set_success_url(view_instance, url_name):
+    if view_instance.well is not None:
+        view_instance.success_url = reverse_lazy(url_name, kwargs={'pk': view_instance.well.pk})
+    else:
+        raise Exception('Well is None')
+
+def calculate_next_core_section_number(Core, core_number):
+    latest_number = Core.objects.filter(core_number=core_number).aggregate(
+        Max('core_section_number'))['core_section_number__max']
+    return latest_number + 1 if latest_number is not None else 1
 
 class IndexView(ListView):
     template_name = 'index.html'
@@ -30,8 +49,6 @@ class IndexView(ListView):
         return Contact.objects.all()
 
 # CONTACT VIEW
-
-
 class ContactDetailView(DetailView):
     model = Contact
     template_name = 'contact-detail.html'
@@ -233,36 +250,7 @@ class CoreFormView(FormView):
     well_name = None
     well = None
     core_number = None
-
-    def set_well_name(self, well_name):
-        self.well_name = well_name
-    
-    def set_well(self):
-        try:
-            self.well = Well.objects.get(name=self.well_name)
-        except Well.DoesNotExist:
-            self.well = None
-
-    def set_success_url(self):
-        if self.well is not None:
-            self.success_url = reverse_lazy(
-                'create_sample', kwargs={'pk': self.well.pk})
-        else:
-            raise Exception('Well is None')
-
-    def set_core_section_number(self):
-        self.core_number = self.request.GET.get('core_number')
-
-        # Based on the core number we get from the url, we propose the next core section number
-        # We also if the core_section_number is not provided, we propose 1 or the next number
-        if self.core_number:
-            # With this query we get the last count of the core_section_number for the current core number
-            latest_core_section_number = Core.objects.filter(core_number=self.core_number).aggregate(
-                Max('core_section_number'))['core_section_number__max']
-            if latest_core_section_number is not None:
-                return latest_core_section_number + 1
-            else:
-                return 1
+    #             return 1
 
     def get_initial(self):
         '''With this function, we pre-populate the form with initial values to avoid having users
@@ -281,7 +269,7 @@ class CoreFormView(FormView):
 
         core_number = self.request.GET.get('core_number')
         initial['core_number'] = core_number
-        initial['core_section_number'] = self.set_core_section_number()    
+        initial['core_section_number'] = calculate_next_core_section_number(Core, core_number)   
         return initial
 
     # Create section name based on the well name, the core number and the core section number
@@ -289,9 +277,9 @@ class CoreFormView(FormView):
         post_data = request.POST.dict()
         
         # Setup success url based on well name submitted in the post request data
-        self.well_name = post_data.get('well')
-        self.set_well()
-        self.set_success_url()
+        set_well_name(self, post_data.get('well'))
+        set_well(self, Well)
+        set_success_url(self, 'create_sample')
 
         # We do this because pydantic needs an id to be created
         if 'id' not in post_data:
@@ -356,36 +344,6 @@ class CoreChipFormView(FormView):
     well_name = None
     core_number = None
 
-    def set_well_name(self, well_name):
-        self.well_name = well_name
-
-    def set_success_url(self):
-        if self.well is not None:
-            self.success_url = reverse_lazy(
-                'select_core_number', kwargs={'pk': self.well.pk})
-        else:
-            raise Exception('Well is None')
-
-    def set_well(self):
-        try:
-            self.well = Well.objects.get(name=self.well_name)
-        except Well.DoesNotExist:
-            self.well = None
-
-    def set_core_section_number(self):
-        self.core_number = self.request.GET.get('core_number')
-
-        # Based on the core number we get from the url, we propose the next core section number
-        # We also if the core_section_number is not provided, we propose 1 or the next number
-        if self.core_number:
-            # With this query we get the last count of the core_section_number for the current core number
-            latest_core_section_number = Core.objects.filter(core_number=self.core_number).aggregate(
-                Max('core_section_number'))['core_section_number__max']
-            if latest_core_section_number is not None:
-                return latest_core_section_number + 1
-            else:
-                return 1
-
     def get_initial(self):
         ''' With this function we pre-populate the form with initial values to avoid that users
         having to type the same values over and over again 
@@ -400,7 +358,7 @@ class CoreChipFormView(FormView):
 
         core_number = self.request.GET.get('core_number')
         initial['core_number'] = core_number
-        initial['core_section_number'] = self.set_core_section_number()
+        initial['core_section_number'] = calculate_next_core_section_number(Core, core_number)
         return initial
 
     def get(self, request, *args, **kwargs):
@@ -419,7 +377,7 @@ class CoreChipFormView(FormView):
         form = self.form_class(initial=data)
 
         # Define all the initial values of the form object
-        self.set_well_name(data['well_name'])
+        set_well_name(self, data['well_name'])
 
         # Set success url based on well pk
         return render(request, self.template_name, {'form': form, **data})
@@ -434,9 +392,10 @@ class CoreChipFormView(FormView):
         if well_name is None:
             raise Exception('Query data does not have the well_name')
 
-        self.set_well_name(well_name=data['well_name'])
-        self.set_well()
-        self.set_success_url()
+        # Setup success url based on well name submitted in the post request data
+        set_well_name(self, post_data.get('well_name'))
+        set_well(self, Well)
+        set_success_url(self, 'create_sample')
 
         if request.user.is_authenticated:
             current_user = request.user
@@ -487,6 +446,11 @@ class MicroCoreFormView(FormView):
             current_user = request.user
         else:
             raise Exception('User is not authenticated')
+        
+        # Set success url based on well pk
+        set_well_name(self, data.get('well_name'))
+        set_well(self, Well)
+        set_success_url(self, 'create_sample')
 
         checked_microcore = _validate(payload=data, model_name='MicroCore')
 
