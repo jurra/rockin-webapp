@@ -27,7 +27,6 @@ def microcore_object(core, well, user, generic_data):
         remarks=generic_data['remarks'],
         drilling_mud="Oil-based mud",
         lithology=generic_data['lithology'],
-        registration_date=generic_data['date_time'],
         micro_core_number=microcore_number,
         micro_core_name=f"{well.gen_short_name()}-MC-{microcore_number}",
         drilling_method="Rotary",
@@ -36,8 +35,9 @@ def microcore_object(core, well, user, generic_data):
 
 
 @pytest.fixture
-def microcore_json(microcore_object):
+def microcore_json(microcore_object, generic_data):
     serialized = model_to_dict(microcore_object)
+    serialized['registration_date'] = generic_data['date_time'] # this needs to be added because it is excluded in the model_to_dict
     return serialized
 
 @pytest.fixture
@@ -76,22 +76,22 @@ def test_create_microcore(microcore_json, well, user):
 
 # TEST VALIDATION
 @pytest.mark.django_db
-def test_validate_microcore(microcore_json):
+def test_validate_microcore(microcore_json, microcore_object):
     '''AC: Comply with pydantic model
     '''
-    valid = _validate(microcore_json, 'MicroCore')
-    assert valid == True
+    valid = _validate(microcore_json, model_name='MicroCore')
+    assert isinstance(valid, MicroCoreModel)  # Check that a valid MicroCore object is returned
+    # assert isinstance(valid, MicroCore)  # Check that a valid MicroCore object is returned
 
     # Create invalid data
     invalid_payload = copy.deepcopy(microcore_json)
     invalid_payload['drilling_mud'] = 'Test Mud'
-    invalid_payload['registered_by'] = ''
-    invalid_payload['well'] = 'invalid_key'
+    invalid_payload['registered_by'] = None
+    invalid_payload['well'] = None
 
-    invalid = _validate(invalid_payload, 'MicroCore')
+    invalid = _validate(invalid_payload, model_name='MicroCore')
 
     assert invalid.errors() is not None
-
     # Count errors and assert that there are three errors in concordance with
     # the number of invalid fields in the invalid_payload
     assert len(invalid.errors()) == 3
