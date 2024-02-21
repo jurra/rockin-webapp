@@ -229,6 +229,8 @@ def test_corechip_post_request(auth_client, corechip_json, user, well, core):
 
     assert response.status_code == 302
     assert CoreChip.objects.filter(corechip_name=data['corechip_name']).exists()
+    assert response.url == f"/wells/{well.pk}/samples/create/"
+
 
 def test_corechip_form_view_from_core_list():
     '''
