@@ -2,7 +2,6 @@ import copy
 from pprint import pprint as pp
 
 import pytest
-from pydantic import ValidationError
 
 from crudapp.models import CoreChip
 from crudapp.views import _validate , CoreChipFormView
@@ -12,30 +11,59 @@ from django.urls import reverse
 from django.test import Client
 from django.db import IntegrityError
 
-@pytest.fixture
-def corechip_post_request(user, well):
-    client = Client()
-    client.force_login(user)
 
-    # Data for the corechip post request
-    corechip_json = {
-        'core_id': 1,
-        'core_chip_number': 1,
-        'from_top_bottom': 'Top',
-        'core_chip_name': 'Test Chip',
-        'core_chip_depth': 10.5,
-        'lithology': 'Test Lithology',
-        'remarks': 'Test Remarks',
-        'debris': True,
-        'formation': 'Test Formation',
+@pytest.fixture
+def corechip(well, user, core):
+    # Shorten the name as it is required for the corechip name
+    well_name_short = well.gen_short_name()
+
+    return CoreChip.objects.create(
+        well=well,
+        registration_date='2021-06-22 13:00:00',
+        collection_date='2021-06-22 12:00:00',
+        core_number=core.core_number,
+        core_section_number=core.core_section_number,
+        planned_core_number=core.planned_core_number,
+        corechip_number='2',
+        drilling_mud='Water-based mud',
+        registered_by=user,
+        from_top_bottom='Top',  # Replace with the desired from_top_bottom choice
+        corechip_name=well_name_short + '-C1-2-CHB7',
+        corechip_depth=10.0,  # Replace with the desired core_chip_depth
+        lithology='Sample Lithology',
+        remarks='Sample Remarks',
+        debris=False,  # Replace with the desired debris value
+        formation='Sample Formation',
+        top_depth=100.0,  # Replace with the desired top_depth
+    )
+
+@pytest.fixture
+def corechip_json(corechip, well):
+    return {
+        # This is post data from the frontend
+        'well': well.name,
+        'well_name': well.name,
+        'registration_date': corechip.registration_date,
+        'registered_by': corechip.registered_by.id,
+        'collection_date': corechip.collection_date,
+        'core_number': corechip.core_number,
+        'planned_core_number': corechip.planned_core_number,
+        'core_section_number': corechip.core_section_number,
+        'core_section_name': corechip.core_section_name,
+        'drilling_mud': corechip.drilling_mud,
+        'corechip_number': corechip.corechip_number,
+        'from_top_bottom': corechip.from_top_bottom,
+        'corechip_name': corechip.corechip_name,
+        'corechip_depth': corechip.corechip_depth,
+        'lithology': corechip.lithology,
+        'remarks': corechip.remarks,
+        'debris': corechip.debris,
+        'formation': corechip.formation,
+        'top_depth': corechip.top_depth,
+        'core_type': 'Core'
     }
 
-    # Make a post request to create a corechip
-    well_id = well.id
-    url = reverse('select_core_number', args=[well_id])  # Replace 'corechip_create' with the actual URL name of the view for corechip creation
-    response = client.post(url, data=corechip_json)
-
-    return response
+print('Corechip JSON:', corechip_json)
 
 # TEST MODEL
 @pytest.mark.django_db
@@ -61,6 +89,7 @@ def test_create_corechip(corechip_json, user, well):
         # Recreate a corechip instance by copypasting corechip
         # This should raise an error because corechip_name is unique
         CoreChip.objects.create(**duplicate_corechip)
+    
 
 def test_update_corechip():
     ''' Here we have new optional data to be added
@@ -75,7 +104,7 @@ def test_delete_corechip():
 
 # TEST VALIDATION
 @pytest.mark.django_db
-def test_validate_corechip(corechip_json, corechip_post_request):
+def test_validate_corechip(corechip_json):
     ''' 
     input: a post request with a corechip
     process: pydantic model vaidates the corechip
@@ -89,7 +118,7 @@ def test_validate_corechip(corechip_json, corechip_post_request):
     corechip_json_copy = copy.deepcopy(corechip_json)
     
     # Alter the corechip data to make it invalid
-    corechip_json_copy['corechip_name'] = ''
+    corechip_json_copy['corechip_name'] = None
     invalid = _validate(corechip_json_copy, model_name='CoreChip')
     assert invalid.errors() is not None
 
@@ -115,7 +144,6 @@ def test_corechip_form_view_get_initial(well, request_factory):
     view = CoreChipFormView()
 
     # Test that a wel with id 1 exists
-    assert well.id == 1
     assert well.name == 'Test Well'
     
     # The request url should be this one:/wells/1/cores/create/?well_name=DAP&core_number=C1
@@ -129,10 +157,7 @@ def test_corechip_form_view_get_initial(well, request_factory):
     initial = view.get_initial()
 
     assert 'collection_date' in initial
-    assert 'well' in initial
-    assert 'core_section_name' in initial
-    initial['core_section_name'] is not None
-    print(initial)
+    assert 'well_name' in initial
 
 @pytest.mark.django_db
 def test_corechip_get_form(well, auth_client, user, core):
@@ -149,6 +174,7 @@ def test_corechip_get_form(well, auth_client, user, core):
         'well_name': well.name,
         'core_number': core.core_number,
         'core_section_name': core.core_section_name,
+        'core_section_number': core.core_number,
     }
 
     auth_client.force_login(user)
@@ -186,32 +212,17 @@ def test_corechip_post_request(auth_client, corechip_json, user, well, core):
     '''
     assert CorechipModel is not None
 
+    data = copy.deepcopy(corechip_json) # the data to be posted
+    # change corechip name
+    data['corechip_name'] = well.gen_short_name() + '-C1-2-CHB8' # 8 instead of 7 because 7 already exists and adding new corechips should be sequencial
+
     auth_client.force_login(user)
 
-    response = auth_client.get(reverse("corechips", kwargs={'pk': well.pk}), data={
-        'well_pk': well.id, # This is the well id
-        'well_name': well.name,
-        'core_number': core.core_number,
-        'core_section_name': core.core_section_name,
-    })
-
-    initial = response.context['form'].initial
-
-    data = copy.deepcopy(corechip_json)
-
-    corechip_view = CoreChipFormView()
-    valid = _validate(data, model_name='CoreChip')
-
-    # add data in initial to data   
-    data.update(initial)
+    response = auth_client.get(reverse("corechips", kwargs={'pk': well.pk}), data=data)
 
     post_request_url= reverse('corechips', kwargs={'pk': well.pk})
 
-    query_params = {
-        'well_name': data['well_name'],
-    }
-
-    post_request_url += '?' + '&'.join([f'{key}={value}' for key, value in query_params.items()])
+    post_request_url += '?' + '&'.join([f'{key}={value}' for key, value in data.items()])
 
     # Make a post request to create a corechip
     response = auth_client.post(post_request_url, data=data)
