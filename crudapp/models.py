@@ -100,10 +100,6 @@ class CoreBase(RockinBase):
     core_section_number = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
         help_text="The counter for all 1 meter sections of the core")
-    core_section_name = models.CharField(
-        max_length=255, 
-        unique=True,
-        help_text="The name of the section based on the well name, the core number and the core section number. See that CC has a sequential relationship with the core number and core section number")
 
     class Meta:
         abstract = True
@@ -129,6 +125,11 @@ class Core(CoreBase):
         ('Core', 'Core'),
         ('Core catcher', 'Core catcher')
     ]
+    core_section_name = models.CharField(
+        max_length=255, 
+        unique=True,
+        help_text="The name of the section based on the well name, the core number and the core section number. See that CC has a sequential relationship with the core number and core section number")
+
     core_type = models.CharField(
         max_length=12,
         choices=CORE_TYPE_CHOICES,
@@ -218,6 +219,11 @@ class CoreChip(CoreBase):
     well = models.ForeignKey(Well, on_delete=models.CASCADE,
                              help_text="The name of the well", related_name='corechips',
                              to_field='name')
+    core_section_name = models.CharField(
+        max_length=255, 
+        unique=False,
+        help_text="The name of the section based on the well name, the core number and the core section number. See that CC has a sequential relationship with the core number and core section number")
+
     corechip_number = models.IntegerField(
         help_text="The predefined name of the core chip")
     FROM_TOP_BOTTOM_CHOICES = [
