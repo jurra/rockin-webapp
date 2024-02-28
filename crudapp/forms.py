@@ -1,5 +1,5 @@
-from django.forms import ModelForm, ModelChoiceField, TextInput, inlineformset_factory
-from crudapp.models import Contact, Well, Core, CoreChip, MicroCore
+from django.forms import ModelForm, ModelChoiceField, TextInput, inlineformset_factory, DateInput
+from crudapp.models import Contact, Well, Core, CoreChip, MicroCore, Cuttings
 
 
 class ContactForm(ModelForm):
@@ -77,10 +77,7 @@ class MicroCoreForm(ModelForm):
         model = MicroCore
         fields = "__all__"
 
-from django import forms
-from crudapp.models import Cuttings
-
-class CuttingsForm(forms.ModelForm):
+class CuttingsForm(ModelForm):
     class Meta:
         model = Cuttings
         fields = "__all__"
@@ -101,7 +98,7 @@ class CuttingsForm(forms.ModelForm):
 
         widgets = {
             # Add any specific widgets you require. For example, a date picker for dates.
-            'dried_date': forms.DateInput(attrs={'type': 'date'}),
+            'dried_date': DateInput(attrs={'type': 'date'}),
         }
 
         # Exclude fields that are not necessary or are automatically handled by the system
