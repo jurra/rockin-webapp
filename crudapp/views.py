@@ -13,7 +13,7 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 
 from .models import Contact, Well, Core, CoreChip
-from .forms import ContactForm, WellForm, CoreForm, CoreChipForm, MicroCoreForm
+from .forms import ContactForm, WellForm, CoreForm, CoreChipForm, MicroCoreForm, CuttingsForm
 
 from pydantic import ValidationError
 
@@ -23,6 +23,13 @@ import datamodel
 
 def set_well_name(view_instance, well_name):
     view_instance.well_name = well_name
+
+def get_well_from_pk(well_pk, Well):
+    try:
+        well = Well.objects.get(pk=well_pk)
+        return well
+    except Well.DoesNotExist:
+        raise Exception('No well was passed to the view')
 
 def set_well(view_instance, Well):
     try:
@@ -104,7 +111,7 @@ def _validate(payload, **kwargs):
         kwargs ([type]): [description], this is a dictionary with the model name
 
     Returns:
-        validated_data ( )
+        validated_data ()
 
     Example:
     >>> _validate(view=self, request=request, payload=post_data, model_name='Well')
@@ -385,10 +392,8 @@ class CoreChipFormView(FormView):
     def post(self, request, *args, **kwargs):
         post_data = request.POST.dict()
 
-        data = request.GET.dict()
-
         # raise error if GET.dict doesn't have the well_name
-        well_name = data.get('well_name')
+        well_name = post_data.get('well_name')
         if well_name is None:
             raise Exception('Query data does not have the well_name')
 
@@ -403,17 +408,15 @@ class CoreChipFormView(FormView):
             raise Exception('User is not authenticated')
 
         # Add the corechip name to the post data to make the post data valid
-        corechip_name = f"{data.get('well')}-{data.get('core_number')}-{data.get('core_section_number')}-{data.get('corechip_number')}-{post_data.get('from_top_bottom')}"
-        # corechip_name = f{initial['well']}
-        post_data['corechip_name'] = corechip_name
-
+        corechip_name = f"{post_data.get('well')}-{post_data.get('core_number')}-{post_data.get('core_section_number')}-{post_data.get('corechip_number')}-{post_data.get('from_top_bottom')}"
+        
         if CoreChip.objects.filter(corechip_name=corechip_name).exists():
             form = self.get_form()
             form.add_error(
                 'corechip_name', f'A corechip with name {corechip_name} already exists. Please try again with a number bigger than {post_data.get("corechip_number") }.')
             return self.form_invalid(form)
 
-        checked_corechip = _validate(payload=data, model_name='CoreChip')
+        checked_corechip = _validate(payload=post_data, model_name='CoreChip')
 
         if checked_corechip is not None:
             if checked_corechip is ValidationError:
@@ -440,7 +443,7 @@ class MicroCoreFormView(FormView):
     form_class = MicroCoreForm
 
     def post(self, request, *args, **kwargs):
-        data = request.GET.dict()
+        data = request.POST.dict()
 
         if request.user.is_authenticated:
             current_user = request.user
@@ -448,8 +451,7 @@ class MicroCoreFormView(FormView):
             raise Exception('User is not authenticated')
         
         # Set success url based on well pk
-        set_well_name(self, data.get('well_name'))
-        set_well(self, Well)
+        self.well = get_well_from_pk(self.kwargs['pk'], Well)
         set_success_url(self, 'create_sample')
 
         checked_microcore = _validate(payload=data, model_name='MicroCore')
@@ -474,5 +476,65 @@ class MicroCoreFormView(FormView):
         else:
             return self.form_invalid(form)
 
+class CuttingsFormView(FormView):
+    template_name = 'cuttings_form.html'  # Specify your template for Cuttings
+    form_class = CuttingsForm  # Use the form specific to Cuttings
+    success_url = reverse_lazy('cuttings_list')  # Redirect to the cuttings list page after successful form submission
 
+    def get_initial(self, request):
+        ''' Pre-populate the form with initial values '''
+        # We extract initial data from GET request parameters to pre-populate the form
+        data = {
+            'well': request.GET.get('well_name'),
+            'well_pk': request.GET.get('well_pk'),
+            'well_name': request.GET.get('well_name'),
+            'core_number': request.GET.get('core_number'),
+            'core_section_name': request.GET.get('core_section_name'),
+            'core_section_number': request.GET.get('core_section_number'),
+            'collection_date': timezone.now(),
+        }
 
+        self.initial = data
+        form = self.form_class(initial=data)
+
+        # Define all the initial values of the form object
+        set_well_name(self, data['well_name'])
+
+        # Set success url based on well pk
+        return render(request, self.template_name, {'form': form, **data})
+
+    def post(self, request, *args, **kwargs):
+        post_data = request.POST.dict()
+
+        # Set well name and well based on submitted data
+        set_well_name(self, post_data.get('well'))
+        set_well(self, Well)
+        set_success_url(self, 'cuttings_list')  # Redirect to the cuttings list after submission
+
+        if 'id' not in post_data:
+            post_data['id'] = 1  # Pydantic model requirement
+
+        if request.user.is_authenticated:
+            current_user = request.user
+        else:
+            raise Exception('User is not authenticated')
+
+        checked_cuttings = _validate(payload=post_data, model_name='Cuttings')
+
+        if checked_cuttings is not None:
+            if type(checked_cuttings) is ValidationError:
+                form = self.get_form()
+                for error in checked_cuttings.errors():
+                    field = error['loc'][0]
+                    message = error['msg']
+                    form.add_error(field, message)
+                return self.form_invalid(form)
+
+        form = self.get_form()
+        if form.is_valid():
+            instance = form.save(commit=False)
+            instance.registered_by = current_user  # Assuming registered_by is a field in Cuttings
+            instance.save()
+            return super().form_valid(form)
+        else:
+            return self.form_invalid(form)
