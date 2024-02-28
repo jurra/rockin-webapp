@@ -369,12 +369,17 @@ class CoreChipFormView(FormView):
         return initial
 
     def get(self, request, *args, **kwargs):
+        core_section_name = request.GET.get('core_section_name')
+        # Extract the core based on the core_section_name
+        core = Core.objects.get(core_section_name=core_section_name)
+
         # We extract initial data from GET request parameters to pre-populate the form
         data = {
             'well': request.GET.get('well_name'),
             'well_pk': request.GET.get('well_pk'),
             'well_name': request.GET.get('well_name'),
             'core_number': request.GET.get('core_number'),
+            'planned_core_number': core.planned_core_number,
             'core_section_name': request.GET.get('core_section_name'),
             'core_section_number': request.GET.get('core_section_number'),
             'collection_date': timezone.now(),
