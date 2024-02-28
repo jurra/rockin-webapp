@@ -77,6 +77,11 @@ class MicroCoreForm(ModelForm):
         model = MicroCore
         fields = "__all__"
 
+        exclude = [
+            'registered_by',
+        ]
+
+
 class CuttingsForm(ModelForm):
     class Meta:
         model = Cuttings
