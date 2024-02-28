@@ -77,4 +77,32 @@ class MicroCoreForm(ModelForm):
         model = MicroCore
         fields = "__all__"
 
-        
+from django import forms
+from crudapp.models import Cuttings
+
+class CuttingsForm(forms.ModelForm):
+    class Meta:
+        model = Cuttings
+        fields = "__all__"
+
+        labels = {
+            'well': 'Well Name',
+            'cuttings_number': 'Cuttings Number',
+            'cuttings_name': 'Cuttings Name',
+            'cuttings_depth': 'Cuttings Depth',
+            'sample_state': 'Sample State',
+            'collection_method': 'Collection Method',
+            'drilling_method': 'Drilling Method',
+            'sample_weight': 'Sample Weight',
+            'dried_sample': 'Dried Sample',
+            'dried_by': 'Dried By',
+            'dried_date': 'Dried Date',
+        }
+
+        widgets = {
+            # Add any specific widgets you require. For example, a date picker for dates.
+            'dried_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+        # Exclude fields that are not necessary or are automatically handled by the system
+        exclude = ['registered_by']
