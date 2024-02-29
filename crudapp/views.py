@@ -176,7 +176,8 @@ class SampleFormView(View):
             elif sample_type == 'Core Catcher':
                 return redirect(reverse_lazy('select_core_number', kwargs={'pk': well_pk}))
             elif sample_type == 'Microcore':
-                return redirect(reverse_lazy('microcores', kwargs={'pk': well_pk}))
+                # The well_name is required as a query parameter
+                return redirect(reverse_lazy('microcores', kwargs={'pk': well.pk}) + f'?well_name={well.name}') 
             # elif sample_type == 'Cuttings':
             #     return redirect(reverse_lazy('cuttings', kwargs={'pk': well_pk}))
             elif sample_type == 'Corechip':
@@ -257,7 +258,6 @@ class CoreFormView(FormView):
     well_name = None
     well = None
     core_number = None
-    #             return 1
 
     def get_initial(self):
         '''With this function, we pre-populate the form with initial values to avoid having users
@@ -446,6 +446,28 @@ class CoreChipFormView(FormView):
 class MicroCoreFormView(FormView):
     template_name = 'microcore_form.html'
     form_class = MicroCoreForm
+    success_url = reverse_lazy('create_sample')
+    
+    well = None
+    well_name = None
+    
+    def get_initial(self):
+        '''With this function, we pre-populate the form with initial values to avoid having users
+        type the same values repeatedly.
+        '''
+        initial = super().get_initial()
+
+        # Capture well_name from the URL query parameters
+        well_name = self.request.GET.get('well_name')
+        self.well_name = well_name
+
+        # Ensure that well_name is not None before assigning it
+        assert well_name is not None, 'well_name is None'
+        initial['well'] = well_name
+        # Propose the user collection date as the current date and time
+        initial['collection_date'] = timezone.now()
+        return initial
+    
 
     def post(self, request, *args, **kwargs):
         data = request.POST.dict()

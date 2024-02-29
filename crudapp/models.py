@@ -26,7 +26,7 @@ class Contact(models.Model):
     def __str__(self):
         return self.firstName
 
-# We need to create a custom field for the PositivePositiveFloatField to set it always to positive
+# We need to create a custom field for the PositiveFloatField to set it always to positive
 class PositiveFloatField(models.FloatField):
     def formfield(self, **kwargs):
         defaults = {'min_value': 0}
@@ -291,7 +291,8 @@ class Cuttings(RockinBase):
 
 class MicroCore(models.Model):
     well = models.ForeignKey(Well, on_delete=models.CASCADE,
-                help_text="The id of the well", related_name='corechips_well')
+                help_text="The name of the well", related_name='corechips_well',
+                to_field='name')
 
     registration_date = models.DateTimeField(
         help_text="The time when the core was registered in the database",
