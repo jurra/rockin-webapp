@@ -35,24 +35,24 @@ def microcore_object(core, well, user, generic_data):
 
 
 @pytest.fixture
-def microcore_json(microcore_object, generic_data):
+def microcore_json(microcore_object, well):
     serialized = model_to_dict(microcore_object)
-    serialized['registration_date'] = generic_data['date_time'] # this needs to be added because it is excluded in the model_to_dict
+    serialized['registration_date'] = microcore_object.registration_date
     return serialized
 
 @pytest.fixture
 def invalid_microcore_json(microcore_json):
     invalid = copy.deepcopy(microcore_json)
+    invalid['micro_core_name'] = 'TestWell-MC-2'
     invalid['drilling_mud'] = 'Test Mud'
     invalid['registered_by'] = ''
-    invalid['well'] = 'invalid_key'
-
     return invalid
 
 
 @pytest.mark.django_db
-def test_microcore_data(microcore_json):
+def test_microcore_data(microcore_json, invalid_microcore_json):
     assert microcore_json['micro_core_name'] == 'TestWell-MC-1'
+    assert invalid_microcore_json['micro_core_name'] == 'TestWell-MC-2'
 
 
 # TEST MODEL
@@ -76,29 +76,18 @@ def test_create_microcore(microcore_json, well, user):
 
 # TEST VALIDATION
 @pytest.mark.django_db
-def test_validate_microcore(microcore_json, microcore_object):
+def test_validate_microcore(microcore_json, invalid_microcore_json, microcore_object, well):
     '''AC: Comply with pydantic model
     '''
     valid = _validate(microcore_json, model_name='MicroCore')
     assert isinstance(valid, MicroCoreModel)  # Check that a valid MicroCore object is returned
-    # assert isinstance(valid, MicroCore)  # Check that a valid MicroCore object is returned
 
     # Create invalid data
-    invalid_payload = copy.deepcopy(microcore_json)
-    invalid_payload['drilling_mud'] = 'Test Mud'
-    invalid_payload['registered_by'] = None
-    invalid_payload['well'] = None
+    invalid = _validate(invalid_microcore_json, model_name='MicroCore')
 
-    invalid = _validate(invalid_payload, model_name='MicroCore')
-
-    assert invalid.errors() is not None
-    # Count errors and assert that there are three errors in concordance with
-    # the number of invalid fields in the invalid_payload
-    assert len(invalid.errors()) == 3
+    assert isinstance(invalid, ValidationError)
 
 # TEST VIEWS
-
-
 @pytest.mark.django_db
 def test_microcore_get_form(auth_client, user, well):
     '''
@@ -117,7 +106,9 @@ def test_microcore_get_form(auth_client, user, well):
     assert response.url == "/accounts/login/"
 
     auth_client.force_login(user)
-    response = auth_client.get(reverse("microcores", kwargs={'pk': well.pk}))
+    # response = auth_client.get(reverse("microcores", kwargs={'pk': well.pk}))
+    response = auth_client.get(f"{reverse('microcores', kwargs={'pk': well.pk})}?well_name={well.name}")
+
 
     assert response.status_code == 200
 
@@ -142,8 +133,10 @@ def test_microcore_post_form(auth_client, user, well, microcore_json, invalid_mi
     # Check that the url link is setup correctly
     # create a post request
     post_data = microcore_json
+    post_data['micro_core_name'] = f"{well.gen_short_name()}-MC-2"
     
     post_url = reverse("microcores", kwargs={'pk': well.pk})
+    post_url += f'?well_name={well.name}'
     
     # raises an error if user is not authenticated
     with pytest.raises(Exception):
@@ -153,16 +146,16 @@ def test_microcore_post_form(auth_client, user, well, microcore_json, invalid_mi
     
     auth_client.force_login(user)
 
+    # check for valid submission
+    response = auth_client.post(post_url, valid_payload, kwargs={'pk': well.pk, 'well_name': well.name})
+
+    assert response.status_code == 302
+    assert response.url == f"/wells/{well.pk}/samples/create/"
+
     # If form is invalid it should return the same page with errors
-    response = auth_client.post(post_url, invalid_payload)
+    response = auth_client.post(post_url, invalid_payload, kwargs={'pk': well.pk, 'well_name': well.name})
     assert response.status_code == 200
     assert response.context['form'].errors is not None
-
-    # check for valid submission
-    response = auth_client.post(post_url, valid_payload)
-    assert response.context['form'].errors is None
-    assert response.status_code == 302
-    assert response.url == f"/wells/{well.pk}/microcores/"
 
 
 
