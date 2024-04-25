@@ -10,29 +10,28 @@ from django.core.management.base import BaseCommand
 
 from django.contrib.auth.models import User
 from crudapp import models as app_models
+from crudapp.management.commands.mappings import load_mappings, apply_mappings
+from django.utils import timezone
 
-def load_mappings(yaml_file):
-    """Load column name and data value mappings from a YAML file."""
-    with open(yaml_file, 'r') as file:
-        mappings = yaml.safe_load(file)
-    return mappings.get('column_mappings', {}), mappings.get('data_mappings', {})
+def get_well_by_name(well_name):
+    '''Define a function that when it finds a well name, fetch the id of the well from the database,
+    the Well object in django ORM style
+    '''
+    # Fetch the well from the database
+    try:
+        well = app_models.Well.objects.get(name=well_name)
+        return well
+    except app_models.Well.DoesNotExist:
+        print(f"Well with name {well_name} not found.")
+        return None
 
-def apply_mappings(csv_file, column_mappings, data_mappings, column_to_modify, output_file):
-    """Apply mappings to column names and a specific data column in a CSV file."""
-    # Load the data
-    df = pd.read_csv(csv_file, encoding='utf-8')
+def insert_well_in_row(row, well_column, well_object):
+    ''' Replace well column value with well object
+    '''
+    # Split the line into multiple lines using string concatenation
+    row[well_column] = well_object
 
-    # Apply column name mappings
-    df.rename(columns=column_mappings, inplace=True)
 
-    # Apply data mappings if a specific column is specified
-    if column_to_modify:
-        if column_to_modify not in df.columns:
-            raise ValueError(f"Column '{column_to_modify}' not found in the CSV file.")
-        df[column_to_modify] = df[column_to_modify].map(data_mappings).fillna(df[column_to_modify])
-
-    # Save the modified DataFrame to a new CSV file
-    df.to_csv(output_file, index=False)
 
 
 class Command(BaseCommand):
@@ -52,7 +51,7 @@ class Command(BaseCommand):
         mapping_file (str): Path to the YAML file that contains column-to-field mappings.
 
     Usage:
-        python manage.py <command_name> path/to/csv.csv ModelName path/to/mappings.yaml
+        python manage.py import_data path/to/csv.csv ModelName path/to/mappings.yaml
 
     Example:
         python manage.py import_data my_data.csv MyModel column_mappings.yaml
@@ -73,9 +72,13 @@ class Command(BaseCommand):
         model_name = kwargs['model_name']
         mapping_file = kwargs['mapping_file']
 
-        column_mappings = self.load_column_mappings(mapping_file)
+        mappings = self.load_column_mappings(mapping_file)
+        print(mappings.get('column_mappings'))
         df = pd.read_csv(csv_file, encoding='utf-8')
-        df.rename(columns=column_mappings, inplace=True)
+        df.rename(columns=mappings.get('column_mappings'), inplace=True)
+        
+        print(f"Importing data from {csv_file} to {model_name} model...")
+        print(df)
 
         model = getattr(app_models, model_name)
         self.import_data_to_model(df, model)
@@ -108,8 +111,18 @@ class Command(BaseCommand):
             model (django.db.models.Model): The Django model class to which the data will be imported.
         """
         instances = []  # List to hold instances of the model for bulk creation
-
+        print(dataframe)
         for row in dataframe.to_dict(orient='records'):
+            # Set the date:time of login for Today
+            row['last_login'] = timezone.now() # We need to set this field to a valid value, and it is not present in the CSV
+
+            row.setdefault('last_login', ) # We don't have this data in the CSV, therefore we set it to None
+            if 'well' in row and row['well'] is not None:
+                try:
+                    insert_well_in_row(row, 'well', get_well_by_name(row['well']))
+                except e:
+                    print('Thre was an issue with inserting the well object in the dataframe')
+
             # Handle ForeignKey for 'registered_by' field
             if 'registered_by' in row and row['registered_by'] is not None:
                 try:
@@ -123,6 +136,12 @@ class Command(BaseCommand):
             
             # Create an instance of the model using the row data
             instances.append(model(**row))
-
-        # Bulk create instances in the database
-        model.objects.bulk_create(instances)
+        
+        try:
+            # Bulk create instances in the database
+            print(f"Creating {len(instances)} instances of {model.__name__}...")
+            print (instances)
+            model.objects.bulk_create(instances)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            raise
