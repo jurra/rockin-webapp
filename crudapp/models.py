@@ -76,6 +76,9 @@ class RockinBase(models.Model):
 
     class Meta:
         abstract = True
+    
+    sample_weight = PositiveFloatField(
+        null=True, blank=True, help_text="The weight of the sample in kilograms")
 
 
 class CoreBase(RockinBase):
@@ -191,6 +194,8 @@ class Core(CoreBase):
         null=True, blank=True, help_text="The weight of the core in kilograms")
     ct_scanned = models.BooleanField(
         null=True, blank=True, help_text="Whether the core was CT scanned or not")
+    macroct_scanned = models.BooleanField(
+        null=True, blank=True, help_text="Whether the core was CT scanned or not")
     gamma_ray = models.BooleanField(
         null=True, blank=True, help_text="Whether the core was gamma ray scanned or not")
     radiation = PositiveFloatField(
@@ -275,8 +280,6 @@ class Cuttings(RockinBase):
         'Coring', 'Coring'), ('Rathole', 'Rathole'), ('Flushing', 'Flushing')], help_text="The method used for collecting the cuttings")
     drilling_method = models.CharField(max_length=100, null=True, blank=True, choices=[(
         'Rotary', 'Rotary'), ('Motor', 'Motor'), ('Both', 'Both')], help_text="The method used for drilling")
-    sample_weight = PositiveFloatField(
-        null=True, blank=True, help_text="The weight of the sample in kilograms")
     dried_sample = models.BooleanField(
         null=True, blank=True, help_text="Whether the sample was dried or not")
     dried_by = models.CharField(
