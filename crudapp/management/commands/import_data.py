@@ -31,6 +31,33 @@ def insert_well_in_row(row, well_column, well_object):
     # Split the line into multiple lines using string concatenation
     row[well_column] = well_object
 
+def process_row(row, model):
+    # Modify or set default values
+    # Check for NaN values and replace them with None
+    row = row.where(pd.notnull(row), None)
+
+    if model == User:
+        row['last_login'] = timezone.now() if 'last_login' not in row else row['last_login']
+    
+    # Handle ForeignKey for 'well'
+    if 'well' in row and row['well']:
+        try:
+            row['well'] = get_well_by_name(row['well'])
+            print(f'Well object: {row["well"]}')
+        except Exception as e:
+            print(f'There was an issue with inserting the well object: {e}')
+            row['well'] = None  # Set to None or handle appropriately
+    
+    # Handle ForeignKey for 'registered_by'
+    if 'registered_by' in row and row['registered_by']:
+        try:
+            row['registered_by'] = User.objects.get(username=row['registered_by'])
+            print("User object: ", row['registered_by'])
+        except User.DoesNotExist:
+            print(f'User with id {row["registered_by"]} not found.')
+    
+    # Create and yield a model instance
+    yield model(**row)
 
 
 
@@ -73,12 +100,11 @@ class Command(BaseCommand):
         mapping_file = kwargs['mapping_file']
 
         mappings = self.load_column_mappings(mapping_file)
-        print(mappings.get('column_mappings'))
+        
         df = pd.read_csv(csv_file, encoding='utf-8')
         df.rename(columns=mappings.get('column_mappings'), inplace=True)
         
         print(f"Importing data from {csv_file} to {model_name} model...")
-        print(df)
 
         model = getattr(app_models, model_name)
         self.import_data_to_model(df, model)
@@ -94,54 +120,24 @@ class Command(BaseCommand):
             dict: A dictionary containing the column mappings.
         """
         print('Loading column mappings from YAML file...')
-        # Print current working directory
         with open(filename, 'r') as file:
             return yaml.safe_load(file)
 
     def import_data_to_model(self, dataframe, model):
         """
-        Import data into the specified Django model.
-
-        This function iterates over each row in the provided DataFrame, converting 
-        it to a dictionary. It handles ForeignKey relationships, specifically for 
-        the 'registered_by' field which is expected to be a ForeignKey to the User model.
-
+        Import data into the specified Django model using a generator to optimize memory usage and handle large datasets efficiently.
+        
         Args:
             dataframe (pd.DataFrame): The DataFrame containing the data to import.
             model (django.db.models.Model): The Django model class to which the data will be imported.
         """
-        instances = []  # List to hold instances of the model for bulk creation
-        print(dataframe)
-        for row in dataframe.to_dict(orient='records'):
-            # Set the date:time of login for Today
-            row['last_login'] = timezone.now() # We need to set this field to a valid value, and it is not present in the CSV
-
-            row.setdefault('last_login', ) # We don't have this data in the CSV, therefore we set it to None
-            if 'well' in row and row['well'] is not None:
+        for index, row in dataframe.iterrows():
+            print(f"Processing row ...")
+            print(row)
+            instance_generator = process_row(row, model)
+            for instance in instance_generator:
                 try:
-                    insert_well_in_row(row, 'well', get_well_by_name(row['well']))
-                except e:
-                    print('Thre was an issue with inserting the well object in the dataframe')
-
-            # Handle ForeignKey for 'registered_by' field
-            if 'registered_by' in row and row['registered_by'] is not None:
-                try:
-                    # Fetch the User instance associated with the ID in 'registered_by'
-                    user_instance = User.objects.get(pk=row['registered_by'])
-                    row['registered_by'] = user_instance  # Assign the User instance to the row
-                except User.DoesNotExist:
-                    # If a User with the given ID doesn't exist, handle the error
-                    print(f"User with ID {row['registered_by']} not found.")
-                    continue  # Skip this row and continue with the next one
-            
-            # Create an instance of the model using the row data
-            instances.append(model(**row))
-        
-        try:
-            # Bulk create instances in the database
-            print(f"Creating {len(instances)} instances of {model.__name__}...")
-            print (instances)
-            model.objects.bulk_create(instances)
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            raise
+                    instance.save()
+                    print(f"Saved: {instance}")
+                except Exception as e:
+                    print(f"Error saving instance: {e}")

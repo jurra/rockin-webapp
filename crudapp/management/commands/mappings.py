@@ -33,9 +33,11 @@ In your script, the `column_to_modify` argument you pass to the `apply_mappings`
 Remember, the actual transformation and application of these mappings depend on correctly specifying them in the YAML file and ensuring your CSV contains the expected columns and data values.
 
 '''
+import os
 import pandas as pd
 import yaml
 import csv
+import argparse
 
 def load_mappings(yaml_file):
     """Load column name and data value mappings from a YAML file.
@@ -136,10 +138,10 @@ def main():
     args = parser.parse_args()
 
     # Load mappings from the YAML file
-    column_mappings, data_mappings = load_mappings(args.yaml_file)
+    column_mappings, data_mappings, ignore_columns = load_mappings(args.yaml_file)
 
     # Apply mappings and save the modified CSV
-    apply_mappings(args.csv_file, column_mappings, data_mappings, args.column_to_modify, args.output_file)
+    apply_mappings(args.csv_file, column_mappings, data_mappings, args.column_to_modify, args.output_file, ignore_columns)
 
     print("Data mapping complete. The modified data is saved to:", args.output_file)
 
