@@ -48,8 +48,8 @@ def load_mappings(yaml_file):
 
 def validate_csv_delimiter(csv_file):
     """
-    Validates that the CSV file uses commas as delimiters. Raises a ValueError
-    if the delimiter is not a comma.
+    Validates that the CSV file uses commas or semicolons as delimiters. Raises a ValueError
+    if the delimiter is neither a comma nor a semicolon.
 
     Args:
         csv_file (str): Path to the CSV file.
@@ -120,6 +120,35 @@ def apply_mappings(csv_file, column_mappings, data_mappings, column_to_modify, o
     df.to_csv(output_file, index=False)    
     print(f"Data successfully processed and saved to {output_file}")
 
+def process_csv_data(base_path, raw_csv, mapping_file, output_csv, column_to_modify=None):
+    """
+    Load a CSV file, apply column and data mappings, and save the modified data to a new file.
+
+    Parameters:
+    - base_path (str): The base directory path where the files are located.
+    - raw_csv (str): Path to the raw CSV file relative to the base path.
+    - mapping_file (str): Path to the YAML file containing mappings, relative to the base path.
+    - output_csv (str): Path to save the modified CSV file, relative to the base path.
+    - column_to_modify (str, optional): The specific column to apply data value mappings to. Default is None.
+    """
+    # Full paths for files
+    csv_file_path = f"{base_path}/{raw_csv}"
+    mapping_file_path = f"{base_path}/{mapping_file}"
+    output_file_path = f"{base_path}/{output_csv}"
+
+    # Load data from CSV
+    df = pd.read_csv(csv_file_path, encoding='utf-8')
+    print(f"Columns in the dataset: {df.columns.tolist()}")
+
+    # Load mappings from YAML
+    column_mappings, data_mappings, ignore_columns = load_mappings(mapping_file_path)
+
+    # Apply mappings and save the modified CSV
+    apply_mappings(csv_file=csv_file_path, column_mappings=column_mappings,
+                   data_mappings=data_mappings, column_to_modify=column_to_modify,
+                   output_file=output_file_path, ignore_columns=ignore_columns)
+
+    print(f"Data processing complete. The modified data is saved to: {output_file_path}")
 
 
 def main():

@@ -6,6 +6,9 @@ Ussage example:
 import os
 import pandas as pd
 import yaml
+from datetime import datetime
+import pytz
+
 from django.core.management.base import BaseCommand
 
 from django.contrib.auth.models import User
@@ -31,10 +34,44 @@ def insert_well_in_row(row, well_column, well_object):
     # Split the line into multiple lines using string concatenation
     row[well_column] = well_object
 
+def convert_date_format(date_str):
+    # Convert from 'MM/DD/YY HH:MM PM' to 'YYYY-MM-DD HH:MM[:ss[.uuuuuu]][TZ]' format
+    try:
+        # Parse the original date string using strptime and the correct format
+        parsed_date = timezone.datetime.strptime(date_str, '%m/%d/%y %I:%M %p')
+        # Make the datetime object timezone aware
+        aware_date = timezone.make_aware(parsed_date, timezone.get_default_timezone())
+        return aware_date
+    except ValueError as e:
+        print(f"Error converting date: {e}")
+        return None
+
 def process_row(row, model):
     # Modify or set default values
     # Check for NaN values and replace them with None
-    row = row.where(pd.notnull(row), None)
+    row = {k: v if pd.notnull(v) else None for k, v in row.items()}
+
+    # Convert date fields matching "MM/DD/YY" or "MM/DD/YY HH:MM AM/PM" to "YYYY-MM-DD HH:MM:SS+TZ"
+    date_fields = [key for key in row.keys() if '_date' in key]  # Handles any field that ends with '_date'
+    for field in date_fields:
+        if row[field] is not None:
+            try:
+                if 'AM' in row[field] or 'PM' in row[field]:
+                    # Parse the existing datetime format with time
+                    original_date = datetime.strptime(row[field], '%m/%d/%y %I:%M %p')
+                else:
+                    # Parse the existing date format without time, default to midnight
+                    original_date = datetime.strptime(row[field], '%m/%d/%y')
+                    original_date = original_date.replace(hour=0, minute=0, second=0)
+                
+                # Convert to desired format with timezone awareness
+                timezone = pytz.timezone('America/New_York')  # Change to your appropriate timezone
+                aware_date = timezone.localize(original_date)
+                # Format to ISO 8601 with seconds and timezone info
+                row[field] = aware_date.strftime('%Y-%m-%d %H:%M:%S%z')
+            except ValueError:
+                print(f"Date format error for field {field} with value {row[field]}")
+                continue  # Optionally continue to the next iteration
 
     if model == User:
         row['last_login'] = timezone.now() if 'last_login' not in row else row['last_login']
@@ -46,7 +83,7 @@ def process_row(row, model):
             print(f'Well object: {row["well"]}')
         except Exception as e:
             print(f'There was an issue with inserting the well object: {e}')
-            row['well'] = None  # Set to None or handle appropriately
+            row['well'] = None
     
     # Handle ForeignKey for 'registered_by'
     if 'registered_by' in row and row['registered_by']:
@@ -54,12 +91,10 @@ def process_row(row, model):
             row['registered_by'] = User.objects.get(username=row['registered_by'])
             print("User object: ", row['registered_by'])
         except User.DoesNotExist:
-            print(f'User with id {row["registered_by"]} not found.')
+            print(f'User with username {row["registered_by"]} not found.')
     
     # Create and yield a model instance
     yield model(**row)
-
-
 
 class Command(BaseCommand):
     """
@@ -101,7 +136,7 @@ class Command(BaseCommand):
 
         mappings = self.load_column_mappings(mapping_file)
         
-        df = pd.read_csv(csv_file, encoding='utf-8')
+        df = pd.read_csv(csv_file, encoding='utf-8', delimiter=',')
         df.rename(columns=mappings.get('column_mappings'), inplace=True)
         
         print(f"Importing data from {csv_file} to {model_name} model...")

@@ -60,7 +60,7 @@ class RockinBase(models.Model):
         auto_now_add=True)
     registered_by = models.ForeignKey(User, on_delete=models.CASCADE)
     collection_date = models.DateTimeField(
-        help_text="The date when the core was collected", default=timezone.now)
+        help_text="The date when the core was collected", default=timezone.now, null=True)
     remarks = models.CharField(
         max_length=255, help_text="The remarks of the section of a meter sample")
 
