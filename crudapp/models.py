@@ -220,7 +220,7 @@ class Core(CoreBase):
         return json.dumps(serialized, indent=4, sort_keys=False)
 
 
-class CoreChip(CoreBase):
+class CoreChip(RockinBase):
     well = models.ForeignKey(Well, on_delete=models.CASCADE,
                              help_text="The name of the well", related_name='corechips',
                              to_field='name')
@@ -229,7 +229,9 @@ class CoreChip(CoreBase):
         unique=False,
         help_text="The name of the section based on the well name, the core number and the core section number. See that CC has a sequential relationship with the core number and core section number")
 
-    corechip_number = models.IntegerField(
+    corechip_number = models.CharField(
+        max_length=255, 
+        unique=True,
         help_text="The predefined name of the core chip")
     FROM_TOP_BOTTOM_CHOICES = [
         ('Top', 'Top'),
@@ -246,16 +248,12 @@ class CoreChip(CoreBase):
         help_text="The name of the core chip that is generated based on well_name, core_number, core_section_number, core_chip_number and from_top_bottom")
     corechip_depth = PositiveFloatField(
         help_text="The depth of the core chip in meters")
-    lithology = models.CharField(
-        max_length=255, help_text="The lithology of the core chip")
-    remarks = models.CharField(
-        max_length=255, help_text="The remarks of the core chip")
-    debris = models.BooleanField(
-        null=True, blank=True, help_text="Whether the core chip is a debris or not")
+
     formation = models.CharField(
         max_length=255, null=True, blank=True, help_text="The formation of the core chip")
 
     top_depth = PositiveFloatField(
+        null=True,
         help_text="The top depth of the section of a meter sample")
 
 
