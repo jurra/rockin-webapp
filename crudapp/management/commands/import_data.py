@@ -35,54 +35,49 @@ def insert_well_in_row(row, well_column, well_object):
     row[well_column] = well_object
 
 def convert_date_format(date_str):
-    # Convert from 'MM/DD/YY HH:MM PM' to 'YYYY-MM-DD HH:MM[:ss[.uuuuuu]][TZ]' format
-    try:
-        # Parse the original date string using strptime and the correct format
-        parsed_date = timezone.datetime.strptime(date_str, '%m/%d/%y %I:%M %p')
-        # Make the datetime object timezone aware
-        aware_date = timezone.make_aware(parsed_date, timezone.get_default_timezone())
-        return aware_date
-    except ValueError as e:
-        print(f"Error converting date: {e}")
-        return None
+    # Attempt to convert from 'MM/DD/YY HH:MM PM', 'MM/DD/YY', and 'DD/MM/YY HH:MM PM', 'DD/MM/YY' to 'YYYY-MM-DD HH:MM:SS+TZ' format
+    formats = [
+        '%m/%d/%y %I:%M %p',  # MM/DD/YY HH:MM PM
+        '%m/%d/%y',           # MM/DD/YY
+        '%d/%m/%y %I:%M %p',  # DD/MM/YY HH:MM PM
+        '%d/%m/%y'            # DD/MM/YY
+    ]
+    for format_str in formats:
+        try:
+            # Attempt to parse the date string with the current format
+            parsed_date = datetime.strptime(date_str, format_str)
+            # Make the datetime object timezone aware
+            aware_date = timezone.make_aware(parsed_date, timezone.get_default_timezone())
+            # Return the date in the desired format with timezone information
+            return aware_date.strftime('%Y-%m-%d %H:%M:%S%z')
+        except ValueError:
+            # If the current format does not match, continue to try the next format
+            continue
+    # If none of the formats matched, log an error message
+    print(f"Error converting date: Date format not recognized for '{date_str}'")
+    return None
 
 def process_row(row, model):
     # Modify or set default values
-    # Check for NaN values and replace them with None
     row = {k: v if pd.notnull(v) else None for k, v in row.items()}
 
-    # Convert date fields matching "MM/DD/YY" or "MM/DD/YY HH:MM AM/PM" to "YYYY-MM-DD HH:MM:SS+TZ"
+    # Convert date fields to the appropriate format
     date_fields = [key for key in row.keys() if '_date' in key]  # Handles any field that ends with '_date'
     for field in date_fields:
         if row[field] is not None:
-            try:
-                if 'AM' in row[field] or 'PM' in row[field]:
-                    # Parse the existing datetime format with time
-                    original_date = datetime.strptime(row[field], '%m/%d/%y %I:%M %p')
-                else:
-                    # Parse the existing date format without time, default to midnight
-                    original_date = datetime.strptime(row[field], '%m/%d/%y')
-                    original_date = original_date.replace(hour=0, minute=0, second=0)
-                
-                # Convert to desired format with timezone awareness
-                timezone = pytz.timezone('America/New_York')  # Change to your appropriate timezone
-                aware_date = timezone.localize(original_date)
-                # Format to ISO 8601 with seconds and timezone info
-                row[field] = aware_date.strftime('%Y-%m-%d %H:%M:%S%z')
-            except ValueError:
+            formatted_date = convert_date_format(row[field])
+            if formatted_date:
+                row[field] = formatted_date
+            else:
                 print(f"Date format error for field {field} with value {row[field]}")
-                continue  # Optionally continue to the next iteration
 
-    if model == User:
-        row['last_login'] = timezone.now() if 'last_login' not in row else row['last_login']
-    
-    # Handle ForeignKey for 'well'
+    # Foreign key handling for 'well' and 'registered_by' fields
     if 'well' in row and row['well']:
         try:
             row['well'] = get_well_by_name(row['well'])
-            print(f'Well object: {row["well"]}')
+            print(f"Well object: {row['well']}")
         except Exception as e:
-            print(f'There was an issue with inserting the well object: {e}')
+            print(f"There was an issue with inserting the well object: {e}")
             row['well'] = None
     
     # Handle ForeignKey for 'registered_by'
@@ -91,10 +86,14 @@ def process_row(row, model):
             row['registered_by'] = User.objects.get(username=row['registered_by'])
             print("User object: ", row['registered_by'])
         except User.DoesNotExist:
-            print(f'User with username {row["registered_by"]} not found.')
-    
+            print(f"User with username {row['registered_by']} not found.")
+            row['registered_by'] = None
     # Create and yield a model instance
-    yield model(**row)
+    try:
+        instance = model(**row)
+        yield instance
+    except Exception as e:
+        print(f"Error saving instance: {e}")
 
 class Command(BaseCommand):
     """
