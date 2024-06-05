@@ -40,8 +40,13 @@ def convert_date_format(date_str):
         '%m/%d/%y %I:%M %p',  # MM/DD/YY HH:MM PM
         '%m/%d/%y',           # MM/DD/YY
         '%d/%m/%y %I:%M %p',  # DD/MM/YY HH:MM PM
-        '%d/%m/%y'            # DD/MM/YY
+        '%d/%m/%y',           # DD/MM/YY
+        '%m/%d/%Y %I:%M %p',  # MM/DD/YYYY HH:MM PM
+        '%m/%d/%Y',           # MM/DD/YYYY
+        '%d/%m/%Y %I:%M %p',  # DD/MM/YYYY HH:MM PM
+        '%d/%m/%Y'            # DD/MM/YYYY
     ]
+
     for format_str in formats:
         try:
             # Attempt to parse the date string with the current format
@@ -88,12 +93,21 @@ def process_row(row, model):
         except User.DoesNotExist:
             print(f"User with username {row['registered_by']} not found.")
             row['registered_by'] = None
+    
+    if 'dried_sample' in row and row['dried_sample']:
+        # Check if the value is 'Yes' or 'No' and convert to boolean
+        if row['dried_sample'].lower() == 'yes':
+            row['dried_sample'] = True
+        elif row['dried_sample'].lower() == 'no':
+            row['dried_sample'] = False
+    
     # Create and yield a model instance
     try:
         instance = model(**row)
         yield instance
     except Exception as e:
         print(f"Error saving instance: {e}")
+
 
 class Command(BaseCommand):
     """
