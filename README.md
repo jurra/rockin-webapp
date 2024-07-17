@@ -33,24 +33,6 @@ To build and run the server using Docker, execute:
 sudo docker-compose up -d --build
 ```
 
-## Connecting Microsoft Access to a Remote MySQL Database
-
-### Getting Started
-
-To connect your Microsoft Access application to an external MySQL database hosted on a server:
-
-1. **Install MySQL ODBC Driver**:
-   - Download and install the MySQL ODBC driver from the MySQL website: [MySQL Connector/ODBC](https://dev.mysql.com/downloads/connector/odbc/).
-
-2. **Set Up System DSN**:
-   - Open the ODBC Data Source Administrator and set up a new System DSN for the MySQL database.
-
-3. **Link Tables in Access**:
-   - Open Access, go to the "External Data" tab, and use the "ODBC Database" option to link to the MySQL database.
-   - Select the System DSN created in the previous step and link the desired tables.
-
-For detailed steps, refer to the documentation in the `docs` directory.
-
 ## Running the Database in a Container
 
 To run the database in a Docker container, you need to apply the migrations first. This is specified in the `docker-compose.yaml` file at line 24. The application itself does not need to be run for the database to be functional.
@@ -93,8 +75,6 @@ You can access interactive the container running the database to make sure the m
      python manage.py makemigrations
      python manage.py migrate
      ```
-
-
 ### Data loading from exported Access data to MySQL using django
 
 To load data exported from Microsoft Access as csv files to MySQL, follow the detailed procedure in the `crudapp/mannagement/commands` directory. Ensure all prerequisites are met and follow the instructions step by step. In order for csv table to be migrated first columns need to be renamed and checked to match the django ORM requirements in the model.
@@ -106,7 +86,20 @@ This command will import data from a CSV file into the targeted database. The co
 ```bash
 python manage.py import_data path/to/csv.csv ModelName path/to/mappings.yaml
 ```
+### Connecting Microsoft Access to a Remote MySQL Database
+To connect your Microsoft Access application to an external MySQL database hosted on a server:
 
+1. **Install MySQL ODBC Driver**:
+   - Download and install the MySQL ODBC driver from the MySQL website: [MySQL Connector/ODBC](https://dev.mysql.com/downloads/connector/odbc/).
+
+2. **Set Up System DSN**:
+   - Open the ODBC Data Source Administrator and set up a new System DSN for the MySQL database.
+
+3. **Link Tables in Access**:
+   - Open Access, go to the "External Data" tab, and use the "ODBC Database" option to link to the MySQL database.
+   - Select the System DSN created in the previous step and link the desired tables.
+
+For detailed steps, refer to the documentation in the `docs` directory.
 
 This setup allows you to run the database locally or on a server, enabling continued use of the application if someone decides to reactivate the project.
 
