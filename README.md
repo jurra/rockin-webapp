@@ -20,7 +20,7 @@ Rockin was a Django-based project designed to manage data of cores extracted fro
    - This solution allows continued use of familiar Access forms while leveraging the capabilities of a robust MySQL backend.
 
 ## Discontinued features
-The Breakdown.md file is a snapshots of plan features and acceptance criteria that portraits the vision for the application.
+The `Breakdown.md` file documents the plan features, as stories and acceptance criteria that portraits the vision for the application.
 1. Interactive forms for data entry and editing.All forms are implemented to enter data, but data retrieving, presentation and editing are missing and this is essential for the application to be viable.
 
 ## Usage
