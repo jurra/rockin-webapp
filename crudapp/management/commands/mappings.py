@@ -1,6 +1,11 @@
 '''
 The mappings process is designed to transform both the column names and specific data values within a given column based on mappings defined in a YAML file. The script does two main types of mappings:
 
+Ussage example:
+>>> column_mappings, data_mappings = load_mappings('path_to_mapping.yaml')
+>>> apply_mappings('path_to_input.csv', column_mappings, data_mappings, 'target_data_column', 'path_to_output.csv')
+
+
 1. **Column Name Mappings** (`column_mappings`): This mapping is applied to rename the columns of the DataFrame. These mappings are taken directly from the CSV file's column names and are matched against keys in the `column_mappings` section of the YAML file.
 
 2. **Data Value Mappings** (`data_mappings`): This mapping is applied to transform the data values in a specific column (`column_to_modify`). The keys for these mappings would be the original values from the specified column in the CSV file, and the values would be what these original data points should be transformed into, as defined in the `data_mappings` section of the YAML file.

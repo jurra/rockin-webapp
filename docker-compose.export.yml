@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  backup:
+    image: ubuntu
+    volumes:
+      - my_database_volume:/var/lib/mysql  # Replace with actual path if different
+      - ./backup:/backup
+    command: bash -c "cd /var/lib/mysql && tar cvf /backup/volume_backup.tar ."
+    # Run once and then stop
+    restart: "no"
+
+volumes:
+  my_database_volume:
+    external: true

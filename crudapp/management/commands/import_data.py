@@ -1,8 +1,3 @@
-'''
-Ussage example:
->>> column_mappings, data_mappings = load_mappings('path_to_mapping.yaml')
->>> apply_mappings('path_to_input.csv', column_mappings, data_mappings, 'target_data_column', 'path_to_output.csv')
-'''
 import os
 import pandas as pd
 import yaml

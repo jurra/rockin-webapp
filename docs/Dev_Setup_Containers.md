@@ -4,7 +4,11 @@ We can either run mysql server locally as a process, or we can run it in a docke
 ## Considerations for current setup
 For testing the user has to enter the container interactively and grant priveleges like this example:
 ```bash
+docker exec -it <container_name> mysql -u root -p
+
+# This is the mysql prompt inside the container
 mysql -u root -p
 mysql> GRANT ALL PRIVILEGES ON test_myrockdb.* TO '<user_name>'@'%';
 mysql> FLUSH PRIVILEGES;
 ```
+
