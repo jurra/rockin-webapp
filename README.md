@@ -25,6 +25,10 @@ Rockin was a Django-based project designed to manage data of cores extracted fro
 
 ## Usage
 
+### Setting Up Environment Variables
+
+Create a `.env` file at the root of your repository based on the `.env-example` file provided. This file should contain your environment-specific configurations, such as database credentials and application settings. Simply copy `.env-example` to `.env` and update the values accordingly.
+
 ### Production and Server Management
 
 To build and run the server using Docker, execute:
